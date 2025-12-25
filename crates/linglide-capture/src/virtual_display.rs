@@ -84,7 +84,9 @@ impl VirtualDisplay {
                     ));
                 }
                 DeviceNode::get().ok_or_else(|| {
-                    Error::VirtualDisplayCreation("Failed to get EVDI device after adding".to_string())
+                    Error::VirtualDisplayCreation(
+                        "Failed to get EVDI device after adding".to_string(),
+                    )
                 })?
             }
         };
@@ -117,9 +119,10 @@ impl VirtualDisplay {
 
     /// Initialize the buffer after mode is received (call this from async context)
     pub async fn init_buffer(&mut self) -> Result<()> {
-        let handle = self.handle.as_ref().ok_or_else(|| {
-            Error::CaptureError("Virtual display not enabled".to_string())
-        })?;
+        let handle = self
+            .handle
+            .as_ref()
+            .ok_or_else(|| Error::CaptureError("Virtual display not enabled".to_string()))?;
 
         let mut handle_guard = handle.lock().await;
 
@@ -145,7 +148,10 @@ impl VirtualDisplay {
             .await
             .map_err(|e| Error::CaptureError(format!("Timeout waiting for display mode. Did you enable the display in Settings > Displays? Error: {:?}", e)))?;
 
-        info!("Received mode from compositor: {}x{}", mode.width, mode.height);
+        info!(
+            "Received mode from compositor: {}x{}",
+            mode.width, mode.height
+        );
 
         // Create a buffer for this mode
         let buffer_id = handle_guard.new_buffer(&mode);
@@ -176,9 +182,10 @@ impl VirtualDisplay {
 
     /// Capture a frame from the virtual display (async)
     pub async fn capture_async(&mut self) -> Result<Frame> {
-        let handle = self.handle.as_ref().ok_or_else(|| {
-            Error::CaptureError("Virtual display not enabled".to_string())
-        })?;
+        let handle = self
+            .handle
+            .as_ref()
+            .ok_or_else(|| Error::CaptureError("Virtual display not enabled".to_string()))?;
 
         let buffer_id = self.buffer_id.ok_or_else(|| {
             Error::CaptureError("Buffer not initialized. Call init_buffer() first".to_string())
@@ -189,9 +196,7 @@ impl VirtualDisplay {
         // Request an update - timeout is OK, we'll use the last buffer content
         // EVDI only sends updates when there are actual changes on screen
         let timeout = Duration::from_millis(50);
-        let _ = handle_guard
-            .request_update(buffer_id, timeout)
-            .await;
+        let _ = handle_guard.request_update(buffer_id, timeout).await;
         // Ignore timeout errors - buffer still has valid data from last update
 
         // Get the buffer data (may be from a previous update if timeout)
@@ -200,9 +205,10 @@ impl VirtualDisplay {
             .ok_or_else(|| Error::CaptureError("Buffer not found".to_string()))?;
 
         let bytes = buffer.bytes();
-        let mode = self.mode.as_ref().ok_or_else(|| {
-            Error::CaptureError("Mode not set".to_string())
-        })?;
+        let mode = self
+            .mode
+            .as_ref()
+            .ok_or_else(|| Error::CaptureError("Mode not set".to_string()))?;
 
         let width = mode.width;
         let height = mode.height;

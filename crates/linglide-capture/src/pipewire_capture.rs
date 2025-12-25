@@ -48,7 +48,9 @@ impl PipeWireCapture {
     }
 
     pub fn capture(&mut self) -> Result<Frame> {
-        let data = self.frame_data.lock()
+        let data = self
+            .frame_data
+            .lock()
             .map_err(|_| Error::CaptureError("Lock poisoned".into()))?
             .clone();
 
@@ -87,14 +89,16 @@ fn run_capture(
         let proxy = Screencast::new().await?;
         let session = proxy.create_session().await?;
 
-        proxy.select_sources(
-            &session,
-            CursorMode::Embedded,
-            SourceType::Monitor.into(),
-            false,
-            None,
-            PersistMode::DoNot,
-        ).await?;
+        proxy
+            .select_sources(
+                &session,
+                CursorMode::Embedded,
+                SourceType::Monitor.into(),
+                false,
+                None,
+                PersistMode::DoNot,
+            )
+            .await?;
 
         info!("Please select a screen to share in the dialog...");
 
@@ -179,7 +183,11 @@ fn run_pipewire(
                         // Check buffer type
                         if count < 3 {
                             let data_type = datas[0].type_();
-                            info!("Buffer type: {:?}, fd: {:?}", data_type, datas[0].as_raw().fd);
+                            info!(
+                                "Buffer type: {:?}, fd: {:?}",
+                                data_type,
+                                datas[0].as_raw().fd
+                            );
                         }
 
                         // Try to get data - for DMA-BUF we need to mmap the fd
@@ -187,8 +195,13 @@ fn run_pipewire(
 
                         if let Some(slice) = data_result {
                             if count < 3 {
-                                info!("Frame {}: offset={}, size={}, slice_len={}",
-                                      count, offset, size, slice.len());
+                                info!(
+                                    "Frame {}: offset={}, size={}, slice_len={}",
+                                    count,
+                                    offset,
+                                    size,
+                                    slice.len()
+                                );
                             }
 
                             if size > 0 && offset + size <= slice.len() {
@@ -222,15 +235,20 @@ fn run_pipewire(
                                     );
 
                                     if ptr != libc::MAP_FAILED {
-                                        let mapped_slice = std::slice::from_raw_parts(ptr as *const u8, map_size);
+                                        let mapped_slice =
+                                            std::slice::from_raw_parts(ptr as *const u8, map_size);
 
                                         if count < 3 {
-                                            info!("DMA-BUF mapped successfully, {} bytes", map_size);
+                                            info!(
+                                                "DMA-BUF mapped successfully, {} bytes",
+                                                map_size
+                                            );
                                         }
 
                                         if let Ok(mut guard) = frame_data_inner.lock() {
                                             let copy_len = map_size.min(expected_size);
-                                            guard[..copy_len].copy_from_slice(&mapped_slice[..copy_len]);
+                                            guard[..copy_len]
+                                                .copy_from_slice(&mapped_slice[..copy_len]);
                                         }
 
                                         libc::munmap(ptr, map_size);
@@ -266,7 +284,9 @@ fn run_pipewire(
 
     // Run until stopped - iterate the loop and check for shutdown
     while running.load(Ordering::SeqCst) {
-        mainloop.loop_().iterate(std::time::Duration::from_millis(16));
+        mainloop
+            .loop_()
+            .iterate(std::time::Duration::from_millis(16));
     }
 
     Ok(())

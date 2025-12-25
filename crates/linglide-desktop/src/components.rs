@@ -91,10 +91,9 @@ pub fn card<R>(ui: &mut Ui, title: Option<&str>, add_contents: impl FnOnce(&mut 
 
 /// Primary action button (blue, filled)
 pub fn primary_button(ui: &mut Ui, text: &str) -> Response {
-    let button =
-        egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
-            .fill(colors::PRIMARY)
-            .rounding(rounding::SMALL);
+    let button = egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
+        .fill(colors::PRIMARY)
+        .rounding(rounding::SMALL);
 
     ui.add(button)
 }
@@ -111,10 +110,9 @@ pub fn secondary_button(ui: &mut Ui, text: &str) -> Response {
 
 /// Danger button (red, for destructive actions)
 pub fn danger_button(ui: &mut Ui, text: &str) -> Response {
-    let button =
-        egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
-            .fill(colors::ERROR)
-            .rounding(rounding::SMALL);
+    let button = egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
+        .fill(colors::ERROR)
+        .rounding(rounding::SMALL);
 
     ui.add(button)
 }
@@ -122,10 +120,9 @@ pub fn danger_button(ui: &mut Ui, text: &str) -> Response {
 /// Success button (green)
 #[allow(dead_code)]
 pub fn success_button(ui: &mut Ui, text: &str) -> Response {
-    let button =
-        egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
-            .fill(colors::SUCCESS)
-            .rounding(rounding::SMALL);
+    let button = egui::Button::new(RichText::new(text).color(colors::TEXT_PRIMARY).strong())
+        .fill(colors::SUCCESS)
+        .rounding(rounding::SMALL);
 
     ui.add(button)
 }

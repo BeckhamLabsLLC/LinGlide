@@ -155,7 +155,10 @@ impl CertificateManager {
     }
 
     /// Save certificate metadata
-    fn save_metadata(&self, meta: &CertMetadata) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn save_metadata(
+        &self,
+        meta: &CertMetadata,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let json = serde_json::to_string_pretty(meta)?;
         std::fs::write(self.metadata_path(), json)?;
         Ok(())
@@ -201,7 +204,9 @@ pub fn generate_self_signed_cert(
     }
 
     // Always add common local IPs
-    san_list.push(SanType::IpAddress(std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1))));
+    san_list.push(SanType::IpAddress(std::net::IpAddr::V4(
+        std::net::Ipv4Addr::new(127, 0, 0, 1),
+    )));
 
     params.subject_alt_names = san_list;
 
@@ -234,8 +239,8 @@ pub async fn create_rustls_config(
     cert_pem: &str,
     key_pem: &str,
 ) -> Result<RustlsConfig, Box<dyn std::error::Error + Send + Sync>> {
-    let config = RustlsConfig::from_pem(cert_pem.as_bytes().to_vec(), key_pem.as_bytes().to_vec())
-        .await?;
+    let config =
+        RustlsConfig::from_pem(cert_pem.as_bytes().to_vec(), key_pem.as_bytes().to_vec()).await?;
     Ok(config)
 }
 

@@ -38,7 +38,9 @@ impl ScreenCapture {
             Ok(Self::PipeWire(PipeWireCapture::new(width, height)?))
         } else {
             tracing::info!("Detected X11 session, using MIT-SHM capture");
-            Ok(Self::X11(X11Capture::new(width, height, offset_x, offset_y)?))
+            Ok(Self::X11(X11Capture::new(
+                width, height, offset_x, offset_y,
+            )?))
         }
     }
 

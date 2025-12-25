@@ -10,7 +10,9 @@ use axum::{
     Json, Router,
 };
 use image::ImageFormat;
-use linglide_auth::{DeviceInfo, PairingStartResponse, PairingVerifyRequest, PairingVerifyResponse};
+use linglide_auth::{
+    DeviceInfo, PairingStartResponse, PairingVerifyRequest, PairingVerifyResponse,
+};
 use linglide_discovery::DiscoveryInfo;
 use linglide_web::Assets;
 use qrcode::QrCode;
@@ -217,7 +219,11 @@ async fn pair_status_handler(
     State(state): State<Arc<AppState>>,
     Query(query): Query<SessionQuery>,
 ) -> Json<PairingStatusResponse> {
-    match state.pairing_manager.get_session_info(&query.session_id).await {
+    match state
+        .pairing_manager
+        .get_session_info(&query.session_id)
+        .await
+    {
         Some((pin, expires_in)) => Json(PairingStatusResponse {
             valid: true,
             pin: Some(pin),
@@ -241,9 +247,7 @@ pub struct SessionQuery {
 // ============================================================================
 
 /// List all paired devices
-async fn list_devices_handler(
-    State(state): State<Arc<AppState>>,
-) -> Json<Vec<DeviceInfo>> {
+async fn list_devices_handler(State(state): State<Arc<AppState>>) -> Json<Vec<DeviceInfo>> {
     let devices = state.pairing_manager.list_devices().await;
     let infos: Vec<DeviceInfo> = devices.iter().map(DeviceInfo::from).collect();
     Json(infos)

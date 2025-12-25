@@ -124,16 +124,25 @@ impl MainWindow {
                         command_tx,
                         qr_window,
                     ),
-                    Tab::Devices => {
-                        self.show_devices_tab(ui, paired_devices, &status.connected_devices, command_tx)
-                    }
+                    Tab::Devices => self.show_devices_tab(
+                        ui,
+                        paired_devices,
+                        &status.connected_devices,
+                        command_tx,
+                    ),
                     Tab::Settings => self.show_settings_tab(ui, command_tx),
                     Tab::About => self.about_section.show(ui, ctx),
                 }
             });
     }
 
-    fn show_header(&mut self, ctx: &egui::Context, ui: &mut egui::Ui, status: &ServerStatus, command_tx: &mpsc::Sender<UiCommand>) {
+    fn show_header(
+        &mut self,
+        ctx: &egui::Context,
+        ui: &mut egui::Ui,
+        status: &ServerStatus,
+        command_tx: &mpsc::Sender<UiCommand>,
+    ) {
         // Load header logo if not yet attempted
         if !self.header_logo_loaded {
             self.header_logo_loaded = true;
@@ -227,12 +236,10 @@ impl MainWindow {
                     colors::TEXT_SECONDARY
                 };
 
-                let response = ui.add(
-                    egui::SelectableLabel::new(
-                        selected,
-                        RichText::new(label).color(text_color),
-                    )
-                );
+                let response = ui.add(egui::SelectableLabel::new(
+                    selected,
+                    RichText::new(label).color(text_color),
+                ));
 
                 if response.clicked() {
                     self.current_tab = tab;
@@ -275,7 +282,11 @@ impl MainWindow {
                             );
                             ui.add_space(4.0);
                             ui.monospace(RichText::new(url).color(colors::TEXT_PRIMARY));
-                            if ui.small_button("\u{1F4CB}").on_hover_text("Copy URL").clicked() {
+                            if ui
+                                .small_button("\u{1F4CB}")
+                                .on_hover_text("Copy URL")
+                                .clicked()
+                            {
                                 ui.output_mut(|o| o.copied_text = url.clone());
                             }
                         });
@@ -342,9 +353,7 @@ impl MainWindow {
                             ui.horizontal(|ui| {
                                 status_dot(ui, true);
                                 ui.add_space(8.0);
-                                ui.label(
-                                    RichText::new(&device.name).color(colors::TEXT_PRIMARY),
-                                );
+                                ui.label(RichText::new(&device.name).color(colors::TEXT_PRIMARY));
                                 ui.add_space(4.0);
                                 ui.label(
                                     RichText::new(format!("{:?}", device.device_type))
@@ -459,9 +468,10 @@ impl MainWindow {
                                     |ui| {
                                         if self.pending_revoke.as_ref() == Some(&device_id) {
                                             if danger_button(ui, "Confirm").clicked() {
-                                                let _ = command_tx.try_send(UiCommand::RevokeDevice {
-                                                    device_id: device_id.clone(),
-                                                });
+                                                let _ =
+                                                    command_tx.try_send(UiCommand::RevokeDevice {
+                                                        device_id: device_id.clone(),
+                                                    });
                                                 self.pending_revoke = None;
                                             }
                                             if secondary_button(ui, "Cancel").clicked() {
@@ -491,16 +501,12 @@ impl MainWindow {
                         .spacing([20.0, 8.0])
                         .show(ui, |ui| {
                             // Resolution
-                            ui.label(
-                                RichText::new("Resolution").color(colors::TEXT_SECONDARY),
-                            );
+                            ui.label(RichText::new("Resolution").color(colors::TEXT_SECONDARY));
                             ui.horizontal(|ui| {
                                 let mut width = self.settings.width as i32;
                                 let mut height = self.settings.height as i32;
                                 ui.add(
-                                    egui::DragValue::new(&mut width)
-                                        .range(640..=3840)
-                                        .speed(10),
+                                    egui::DragValue::new(&mut width).range(640..=3840).speed(10),
                                 );
                                 ui.label(RichText::new("x").color(colors::TEXT_MUTED));
                                 ui.add(
@@ -514,9 +520,7 @@ impl MainWindow {
                             ui.end_row();
 
                             // Frame Rate
-                            ui.label(
-                                RichText::new("Frame Rate").color(colors::TEXT_SECONDARY),
-                            );
+                            ui.label(RichText::new("Frame Rate").color(colors::TEXT_SECONDARY));
                             let mut fps = self.settings.fps as i32;
                             ui.add(
                                 egui::DragValue::new(&mut fps)
@@ -527,9 +531,7 @@ impl MainWindow {
                             ui.end_row();
 
                             // Bitrate
-                            ui.label(
-                                RichText::new("Bitrate").color(colors::TEXT_SECONDARY),
-                            );
+                            ui.label(RichText::new("Bitrate").color(colors::TEXT_SECONDARY));
                             let mut bitrate = self.settings.bitrate as i32;
                             ui.add(
                                 egui::DragValue::new(&mut bitrate)
@@ -607,7 +609,10 @@ impl MainWindow {
 fn load_header_logo(ctx: &egui::Context) -> Option<TextureHandle> {
     let icon_paths = [
         // Development path (relative to crate)
-        concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/linglide-icon.png"),
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/assets/icons/linglide-icon.png"
+        ),
         // Installed paths
         "/usr/share/icons/hicolor/256x256/apps/linglide.png",
         "/usr/share/pixmaps/linglide.png",
@@ -620,7 +625,11 @@ fn load_header_logo(ctx: &egui::Context) -> Option<TextureHandle> {
                 let size = [rgba.width() as usize, rgba.height() as usize];
                 let pixels = rgba.into_raw();
                 let color_image = egui::ColorImage::from_rgba_unmultiplied(size, &pixels);
-                return Some(ctx.load_texture("header_logo", color_image, egui::TextureOptions::LINEAR));
+                return Some(ctx.load_texture(
+                    "header_logo",
+                    color_image,
+                    egui::TextureOptions::LINEAR,
+                ));
             }
         }
     }

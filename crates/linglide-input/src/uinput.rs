@@ -1,8 +1,8 @@
 //! Virtual uinput device creation
 
 use evdev::{
-    uinput::VirtualDevice as EvdevVirtualDevice,
-    AbsInfo, AbsoluteAxisCode, AttributeSet, InputEvent, KeyCode, RelativeAxisCode, UinputAbsSetup,
+    uinput::VirtualDevice as EvdevVirtualDevice, AbsInfo, AbsoluteAxisCode, AttributeSet,
+    InputEvent, KeyCode, RelativeAxisCode, UinputAbsSetup,
 };
 use linglide_core::{Error, Result};
 use tracing::info;
@@ -46,7 +46,13 @@ impl VirtualDevice {
     }
 
     /// Create a new virtual absolute pointer device with offset support
-    pub fn new_absolute_pointer_with_offset(name: &str, width: u32, height: u32, offset_x: i32, offset_y: i32) -> Result<Self> {
+    pub fn new_absolute_pointer_with_offset(
+        name: &str,
+        width: u32,
+        height: u32,
+        offset_x: i32,
+        offset_y: i32,
+    ) -> Result<Self> {
         let mut keys = AttributeSet::<KeyCode>::new();
         keys.insert(KeyCode::BTN_TOUCH);
         keys.insert(KeyCode::BTN_TOOL_FINGER);
@@ -72,7 +78,10 @@ impl VirtualDevice {
             .build()
             .map_err(|e| Error::UinputCreation(e.to_string()))?;
 
-        info!("Created virtual absolute pointer: {} ({}x{} at offset {},{})", name, width, height, offset_x, offset_y);
+        info!(
+            "Created virtual absolute pointer: {} ({}x{} at offset {},{})",
+            name, width, height, offset_x, offset_y
+        );
 
         Ok(Self {
             device,
@@ -87,7 +96,14 @@ impl VirtualDevice {
 
     /// Create a new multitouch device with offset support
     /// The device bounds cover the full desktop coordinate space
-    pub fn new_multitouch_with_offset(name: &str, width: u32, height: u32, offset_x: i32, offset_y: i32, max_slots: u32) -> Result<Self> {
+    pub fn new_multitouch_with_offset(
+        name: &str,
+        width: u32,
+        height: u32,
+        offset_x: i32,
+        offset_y: i32,
+        max_slots: u32,
+    ) -> Result<Self> {
         let mut keys = AttributeSet::<KeyCode>::new();
         keys.insert(KeyCode::BTN_TOUCH);
         keys.insert(KeyCode::BTN_TOOL_FINGER);
@@ -109,18 +125,33 @@ impl VirtualDevice {
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_Y, y_abs))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_MT_SLOT, slot_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_MT_SLOT,
+                slot_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_MT_TRACKING_ID, tracking_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_MT_TRACKING_ID,
+                tracking_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_MT_POSITION_X, x_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_MT_POSITION_X,
+                x_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_MT_POSITION_Y, y_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_MT_POSITION_Y,
+                y_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .build()
             .map_err(|e| Error::UinputCreation(e.to_string()))?;
 
-        info!("Created virtual multitouch: {} ({}x{} at offset {},{}, {} slots)", name, width, height, offset_x, offset_y, max_slots);
+        info!(
+            "Created virtual multitouch: {} ({}x{} at offset {},{}, {} slots)",
+            name, width, height, offset_x, offset_y, max_slots
+        );
 
         Ok(Self {
             device,
@@ -135,14 +166,20 @@ impl VirtualDevice {
 
     /// Create a new virtual stylus/pen device with pressure and tilt support
     /// Compatible with Wacom tablet protocol for drawing applications
-    pub fn new_stylus_with_offset(name: &str, width: u32, height: u32, offset_x: i32, offset_y: i32) -> Result<Self> {
+    pub fn new_stylus_with_offset(
+        name: &str,
+        width: u32,
+        height: u32,
+        offset_x: i32,
+        offset_y: i32,
+    ) -> Result<Self> {
         let mut keys = AttributeSet::<KeyCode>::new();
         // Tool type buttons
         keys.insert(KeyCode::BTN_TOUCH);
         keys.insert(KeyCode::BTN_TOOL_PEN);
         keys.insert(KeyCode::BTN_TOOL_RUBBER); // Eraser end
-        // Stylus buttons
-        keys.insert(KeyCode::BTN_STYLUS);  // Barrel button 1
+                                               // Stylus buttons
+        keys.insert(KeyCode::BTN_STYLUS); // Barrel button 1
         keys.insert(KeyCode::BTN_STYLUS2); // Barrel button 2
 
         // Position axes with 10x resolution for sub-pixel precision
@@ -167,18 +204,27 @@ impl VirtualDevice {
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_Y, y_abs))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_PRESSURE, pressure_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_PRESSURE,
+                pressure_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_TILT_X, tilt_abs))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_TILT_Y, tilt_abs))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
-            .with_absolute_axis(&UinputAbsSetup::new(AbsoluteAxisCode::ABS_DISTANCE, distance_abs))
+            .with_absolute_axis(&UinputAbsSetup::new(
+                AbsoluteAxisCode::ABS_DISTANCE,
+                distance_abs,
+            ))
             .map_err(|e| Error::UinputCreation(e.to_string()))?
             .build()
             .map_err(|e| Error::UinputCreation(e.to_string()))?;
 
-        info!("Created virtual stylus: {} ({}x{} at offset {},{}, 4096 pressure levels)", name, width, height, offset_x, offset_y);
+        info!(
+            "Created virtual stylus: {} ({}x{} at offset {},{}, 4096 pressure levels)",
+            name, width, height, offset_x, offset_y
+        );
 
         Ok(Self {
             device,

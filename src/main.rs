@@ -6,18 +6,20 @@
 use anyhow::Result;
 use clap::Parser;
 use linglide_auth::{DeviceStorage, PairingManager};
-use linglide_capture::{Frame, VirtualDisplay, ScreenCapture};
+use linglide_capture::{Frame, ScreenCapture, VirtualDisplay};
 use linglide_core::{Config, DisplayPosition};
 use linglide_discovery::{ServiceAdvertiser, UsbConnectionManager};
-use linglide_encoder::EncodingPipeline;
 use linglide_encoder::pipeline::StreamSegment;
-use linglide_input::{VirtualMouse, VirtualStylus, VirtualTouchscreen, mouse::RelativeMouse};
-use linglide_server::{broadcast::AppState, create_router, CertificateManager, create_rustls_config};
+use linglide_encoder::EncodingPipeline;
+use linglide_input::{mouse::RelativeMouse, VirtualMouse, VirtualStylus, VirtualTouchscreen};
+use linglide_server::{
+    broadcast::AppState, create_router, create_rustls_config, CertificateManager,
+};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{broadcast, mpsc};
-use tracing::{info, warn, debug, Level};
+use tracing::{debug, info, warn, Level};
 use tracing_subscriber::EnvFilter;
 
 /// LinGlide - Use your mobile device as an extended display
@@ -95,7 +97,11 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     // Initialize logging with filter to reduce evdi spam
-    let log_level = if args.verbose { Level::DEBUG } else { Level::INFO };
+    let log_level = if args.verbose {
+        Level::DEBUG
+    } else {
+        Level::INFO
+    };
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(log_level)
         .with_target(false)
@@ -103,7 +109,7 @@ async fn main() -> Result<()> {
         .with_env_filter(
             EnvFilter::from_default_env()
                 .add_directive(log_level.into())
-                .add_directive("evdi=error".parse().unwrap())  // Suppress evdi warnings
+                .add_directive("evdi=error".parse().unwrap()), // Suppress evdi warnings
         )
         .finish();
     tracing::subscriber::set_global_default(subscriber).ok();
@@ -111,7 +117,9 @@ async fn main() -> Result<()> {
     info!("LinGlide v{}", env!("CARGO_PKG_VERSION"));
 
     // Parse position
-    let position: DisplayPosition = args.position.parse()
+    let position: DisplayPosition = args
+        .position
+        .parse()
         .map_err(|e: String| anyhow::anyhow!(e))?;
 
     // Create configuration
@@ -162,7 +170,8 @@ async fn main() -> Result<()> {
                     .map_err(|e| anyhow::anyhow!("Failed to create certificate manager: {}", e))?;
 
                 let hostnames = vec![local_ip.clone(), "localhost".to_string()];
-                cert_manager.load_or_generate(&hostnames)
+                cert_manager
+                    .load_or_generate(&hostnames)
                     .map_err(|e| anyhow::anyhow!("Failed to load/generate certificate: {}", e))?
             }
         };
@@ -183,12 +192,15 @@ async fn main() -> Result<()> {
     let device_storage = Arc::new(
         DeviceStorage::new()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to initialize device storage: {}", e))?
+            .map_err(|e| anyhow::anyhow!("Failed to initialize device storage: {}", e))?,
     );
 
     let protocol = if use_tls { "https" } else { "http" };
     let server_url = format!("{}://{}:{}", protocol, local_ip, config.port);
-    let pairing_manager = Arc::new(PairingManager::new(device_storage.clone(), server_url.clone()));
+    let pairing_manager = Arc::new(PairingManager::new(
+        device_storage.clone(),
+        server_url.clone(),
+    ));
 
     // Check authentication status
     let auth_required = !args.no_auth;
@@ -240,7 +252,10 @@ async fn main() -> Result<()> {
             urlencoding::encode(&server_url),
             pin,
             session_id,
-            cert_fingerprint.as_ref().map(|fp| format!("&fp={}", &fp[..fp.len().min(20)])).unwrap_or_default()
+            cert_fingerprint
+                .as_ref()
+                .map(|fp| format!("&fp={}", &fp[..fp.len().min(20)]))
+                .unwrap_or_default()
         );
 
         // Display QR code in terminal
@@ -274,7 +289,9 @@ async fn main() -> Result<()> {
                         urlencoding::encode(&url),
                         response.pin,
                         response.session_id,
-                        fp.as_ref().map(|f| format!("&fp={}", &f[..f.len().min(20)])).unwrap_or_default()
+                        fp.as_ref()
+                            .map(|f| format!("&fp={}", &f[..f.len().min(20)]))
+                            .unwrap_or_default()
                     );
 
                     println!();
@@ -284,7 +301,10 @@ async fn main() -> Result<()> {
                     println!("  ║         PAIRING PIN: {}         ║", response.pin);
                     println!("  ╚══════════════════════════════════════╝");
                     println!();
-                    println!("  PIN refreshed. Expires in {} seconds", response.expires_in);
+                    println!(
+                        "  PIN refreshed. Expires in {} seconds",
+                        response.expires_in
+                    );
                     println!();
                 } else {
                     // Device paired, stop refreshing
@@ -498,8 +518,14 @@ async fn main() -> Result<()> {
     });
 
     // Receive and store init segment and codec info in app state
-    if let Ok((init_segment, codec_string, avcc_data)) = init_rx.recv_timeout(std::time::Duration::from_secs(5)) {
-        info!("Received init segment: {} bytes, codec: {}", init_segment.len(), codec_string);
+    if let Ok((init_segment, codec_string, avcc_data)) =
+        init_rx.recv_timeout(std::time::Duration::from_secs(5))
+    {
+        info!(
+            "Received init segment: {} bytes, codec: {}",
+            init_segment.len(),
+            codec_string
+        );
         state_clone.set_init_segment(init_segment);
         state_clone.set_codec_config(codec_string, avcc_data);
     } else {
@@ -523,47 +549,42 @@ async fn main() -> Result<()> {
 
         while let Some(event) = input_rx.recv().await {
             let result = match event {
-                InputEvent::TouchStart { id, x, y } => {
-                    touchscreen.touch_start(id, x, y)
-                }
-                InputEvent::TouchMove { id, x, y } => {
-                    touchscreen.touch_move(id, x, y)
-                }
-                InputEvent::TouchEnd { id } => {
-                    touchscreen.touch_end(id)
-                }
-                InputEvent::TouchCancel { id } => {
-                    touchscreen.touch_cancel(id)
-                }
-                InputEvent::MouseDown { button, x, y } => {
-                    mouse.mouse_down(button, x, y)
-                }
-                InputEvent::MouseUp { button, x, y } => {
-                    mouse.mouse_up(button, x, y)
-                }
-                InputEvent::MouseMove { x, y } => {
-                    mouse.mouse_move(x, y)
-                }
-                InputEvent::Scroll { dx, dy } => {
-                    scroll_mouse.scroll(dx, dy)
-                }
+                InputEvent::TouchStart { id, x, y } => touchscreen.touch_start(id, x, y),
+                InputEvent::TouchMove { id, x, y } => touchscreen.touch_move(id, x, y),
+                InputEvent::TouchEnd { id } => touchscreen.touch_end(id),
+                InputEvent::TouchCancel { id } => touchscreen.touch_cancel(id),
+                InputEvent::MouseDown { button, x, y } => mouse.mouse_down(button, x, y),
+                InputEvent::MouseUp { button, x, y } => mouse.mouse_up(button, x, y),
+                InputEvent::MouseMove { x, y } => mouse.mouse_move(x, y),
+                InputEvent::Scroll { dx, dy } => scroll_mouse.scroll(dx, dy),
                 InputEvent::KeyDown { .. } | InputEvent::KeyUp { .. } => {
                     // Keyboard input not implemented yet
                     Ok(())
                 }
                 // Stylus/pen events
-                InputEvent::PenHover { x, y, pressure, tilt_x, tilt_y } => {
-                    stylus.pen_hover(x, y, pressure, tilt_x, tilt_y)
-                }
-                InputEvent::PenDown { x, y, pressure, tilt_x, tilt_y, button } => {
-                    stylus.pen_down(x, y, pressure, tilt_x, tilt_y, button)
-                }
-                InputEvent::PenMove { x, y, pressure, tilt_x, tilt_y } => {
-                    stylus.pen_move(x, y, pressure, tilt_x, tilt_y)
-                }
-                InputEvent::PenUp { x, y } => {
-                    stylus.pen_up(x, y)
-                }
+                InputEvent::PenHover {
+                    x,
+                    y,
+                    pressure,
+                    tilt_x,
+                    tilt_y,
+                } => stylus.pen_hover(x, y, pressure, tilt_x, tilt_y),
+                InputEvent::PenDown {
+                    x,
+                    y,
+                    pressure,
+                    tilt_x,
+                    tilt_y,
+                    button,
+                } => stylus.pen_down(x, y, pressure, tilt_x, tilt_y, button),
+                InputEvent::PenMove {
+                    x,
+                    y,
+                    pressure,
+                    tilt_x,
+                    tilt_y,
+                } => stylus.pen_move(x, y, pressure, tilt_x, tilt_y),
+                InputEvent::PenUp { x, y } => stylus.pen_up(x, y),
                 InputEvent::PenButtonEvent { button, pressed } => {
                     stylus.pen_button(button, pressed)
                 }
@@ -654,7 +675,8 @@ fn display_qr_code(data: &str) {
     };
 
     // Render as Unicode block characters for terminal display
-    let string = code.render::<char>()
+    let string = code
+        .render::<char>()
         .quiet_zone(true)
         .module_dimensions(2, 1)
         .build();

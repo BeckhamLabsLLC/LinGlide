@@ -32,7 +32,7 @@ impl VirtualTouchscreen {
             height,
             offset_x,
             offset_y,
-            max_slots
+            max_slots,
         )?;
 
         Ok(Self {
@@ -49,7 +49,8 @@ impl VirtualTouchscreen {
 
     /// Find an available slot for a new touch
     fn find_free_slot(&self) -> Option<u32> {
-        let used_slots: std::collections::HashSet<_> = self.active_touches.values().copied().collect();
+        let used_slots: std::collections::HashSet<_> =
+            self.active_touches.values().copied().collect();
         (0..self.max_slots).find(|slot| !used_slots.contains(slot))
     }
 
@@ -62,7 +63,8 @@ impl VirtualTouchscreen {
 
     /// Handle touch start event
     pub fn touch_start(&mut self, id: u32, x: f64, y: f64) -> Result<()> {
-        let slot = self.find_free_slot()
+        let slot = self
+            .find_free_slot()
             .ok_or_else(|| Error::InputError("No available touch slots".to_string()))?;
 
         let tracking_id = self.next_tracking_id;
@@ -71,17 +73,35 @@ impl VirtualTouchscreen {
 
         let (abs_x, abs_y) = self.to_absolute(x, y);
 
-        info!("Touch start: id={}, slot={}, norm=({:.3}, {:.3}), abs=({}, {}), offset=({}, {})",
-              id, slot, x, y, abs_x, abs_y, self.offset_x, self.offset_y);
+        info!(
+            "Touch start: id={}, slot={}, norm=({:.3}, {:.3}), abs=({}, {}), offset=({}, {})",
+            id, slot, x, y, abs_x, abs_y, self.offset_x, self.offset_y
+        );
 
         let events = [
             // Select slot
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_SLOT.0, slot as i32),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_SLOT.0,
+                slot as i32,
+            ),
             // Set tracking ID (new touch)
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_TRACKING_ID.0, tracking_id as i32),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_TRACKING_ID.0,
+                tracking_id as i32,
+            ),
             // Set position
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_POSITION_X.0, abs_x),
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_POSITION_Y.0, abs_y),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_POSITION_X.0,
+                abs_x,
+            ),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_POSITION_Y.0,
+                abs_y,
+            ),
             // Also update single-touch axes for compatibility
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_X.0, abs_x),
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_Y.0, abs_y),
@@ -100,19 +120,36 @@ impl VirtualTouchscreen {
 
     /// Handle touch move event
     pub fn touch_move(&mut self, id: u32, x: f64, y: f64) -> Result<()> {
-        let slot = *self.active_touches.get(&id)
+        let slot = *self
+            .active_touches
+            .get(&id)
             .ok_or_else(|| Error::InputError(format!("Unknown touch id: {}", id)))?;
 
         let (abs_x, abs_y) = self.to_absolute(x, y);
 
-        debug!("Touch move: id={}, slot={}, pos=({}, {})", id, slot, abs_x, abs_y);
+        debug!(
+            "Touch move: id={}, slot={}, pos=({}, {})",
+            id, slot, abs_x, abs_y
+        );
 
         let events = [
             // Select slot
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_SLOT.0, slot as i32),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_SLOT.0,
+                slot as i32,
+            ),
             // Update position
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_POSITION_X.0, abs_x),
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_POSITION_Y.0, abs_y),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_POSITION_X.0,
+                abs_x,
+            ),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_POSITION_Y.0,
+                abs_y,
+            ),
             // Also update single-touch axes
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_X.0, abs_x),
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_Y.0, abs_y),
@@ -125,16 +162,26 @@ impl VirtualTouchscreen {
 
     /// Handle touch end event
     pub fn touch_end(&mut self, id: u32) -> Result<()> {
-        let slot = self.active_touches.remove(&id)
+        let slot = self
+            .active_touches
+            .remove(&id)
             .ok_or_else(|| Error::InputError(format!("Unknown touch id: {}", id)))?;
 
         debug!("Touch end: id={}, slot={}", id, slot);
 
         let mut events = vec![
             // Select slot
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_SLOT.0, slot as i32),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_SLOT.0,
+                slot as i32,
+            ),
             // Set tracking ID to -1 (touch lifted)
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_MT_TRACKING_ID.0, -1),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_MT_TRACKING_ID.0,
+                -1,
+            ),
         ];
 
         // If no more touches, send BTN_TOUCH up

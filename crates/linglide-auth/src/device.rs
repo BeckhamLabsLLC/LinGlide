@@ -146,8 +146,17 @@ mod tests {
     #[test]
     fn test_device_type_parsing() {
         assert_eq!("ios".parse::<DeviceType>().unwrap(), DeviceType::Ios);
-        assert_eq!("android".parse::<DeviceType>().unwrap(), DeviceType::Android);
-        assert_eq!("browser".parse::<DeviceType>().unwrap(), DeviceType::Browser);
-        assert_eq!("unknown".parse::<DeviceType>().unwrap(), DeviceType::Unknown);
+        assert_eq!(
+            "android".parse::<DeviceType>().unwrap(),
+            DeviceType::Android
+        );
+        assert_eq!(
+            "browser".parse::<DeviceType>().unwrap(),
+            DeviceType::Browser
+        );
+        assert_eq!(
+            "unknown".parse::<DeviceType>().unwrap(),
+            DeviceType::Unknown
+        );
     }
 }

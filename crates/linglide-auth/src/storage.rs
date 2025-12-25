@@ -195,7 +195,11 @@ mod tests {
         let storage = DeviceStorage::with_path(path.clone()).await.unwrap();
 
         // Create device
-        let device = Device::new("Test".to_string(), DeviceType::Browser, "hash123".to_string());
+        let device = Device::new(
+            "Test".to_string(),
+            DeviceType::Browser,
+            "hash123".to_string(),
+        );
         let id = device.id.clone();
 
         // Save
@@ -222,8 +226,11 @@ mod tests {
         let device_id;
         {
             let storage = DeviceStorage::with_path(path.clone()).await.unwrap();
-            let device =
-                Device::new("Persistent".to_string(), DeviceType::Ios, "hash456".to_string());
+            let device = Device::new(
+                "Persistent".to_string(),
+                DeviceType::Ios,
+                "hash456".to_string(),
+            );
             device_id = device.id.clone();
             storage.save_device(device).await.unwrap();
         }

@@ -26,8 +26,8 @@ impl X11Capture {
     /// Create a new X11 capture instance
     pub fn new(width: u32, height: u32, offset_x: i32, offset_y: i32) -> Result<Self> {
         // Connect to X11
-        let (conn, screen_num) = xcb::Connection::connect(None)
-            .map_err(|e| Error::X11Connection(e.to_string()))?;
+        let (conn, screen_num) =
+            xcb::Connection::connect(None).map_err(|e| Error::X11Connection(e.to_string()))?;
 
         // Check for SHM extension
         let shm_cookie = conn.send_request(&xcb::shm::QueryVersion {});
@@ -40,13 +40,8 @@ impl X11Capture {
         let buffer_size = (width * height * 4) as usize;
 
         // Create shared memory segment
-        let shm_id = unsafe {
-            libc::shmget(
-                libc::IPC_PRIVATE,
-                buffer_size,
-                libc::IPC_CREAT | 0o777,
-            )
-        };
+        let shm_id =
+            unsafe { libc::shmget(libc::IPC_PRIVATE, buffer_size, libc::IPC_CREAT | 0o777) };
 
         if shm_id < 0 {
             return Err(Error::CaptureError(format!(
@@ -126,9 +121,8 @@ impl X11Capture {
 
         // Copy data from shared memory
         let buffer_size = (self.width * self.height * 4) as usize;
-        let data = unsafe {
-            std::slice::from_raw_parts(self.shm_addr as *const u8, buffer_size).to_vec()
-        };
+        let data =
+            unsafe { std::slice::from_raw_parts(self.shm_addr as *const u8, buffer_size).to_vec() };
 
         self.sequence += 1;
 

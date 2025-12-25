@@ -120,7 +120,10 @@ pub async fn handle_video_socket(socket: WebSocket, state: Arc<AppState>) {
 
     // Send init message with display configuration and codec info
     let (codec, codec_data) = if let Some(config) = state.get_codec_config() {
-        (Some(config.codec_string), Some(BASE64.encode(&config.avcc_data)))
+        (
+            Some(config.codec_string),
+            Some(BASE64.encode(&config.avcc_data)),
+        )
     } else {
         (None, None)
     };
@@ -164,7 +167,11 @@ pub async fn handle_video_socket(socket: WebSocket, state: Arc<AppState>) {
     // Send most recent keyframe segment so client can start decoding immediately
     if let Some(keyframe_segment) = state.get_keyframe_segment() {
         debug!("Sending keyframe segment: {} bytes", keyframe_segment.len());
-        if sender.send(Message::Binary(keyframe_segment)).await.is_err() {
+        if sender
+            .send(Message::Binary(keyframe_segment))
+            .await
+            .is_err()
+        {
             warn!("Failed to send keyframe segment");
             return;
         }
@@ -244,20 +251,18 @@ pub async fn handle_input_socket(socket: WebSocket, state: Arc<AppState>) {
 
     while let Some(msg) = receiver.next().await {
         match msg {
-            Ok(Message::Text(text)) => {
-                match serde_json::from_str::<InputEvent>(&text) {
-                    Ok(event) => {
-                        info!("Input event received: {:?}", event);
-                        if state.input_tx.send(event).await.is_err() {
-                            warn!("Input channel closed");
-                            break;
-                        }
-                    }
-                    Err(e) => {
-                        warn!("Invalid input event: {} - raw: {}", e, text);
+            Ok(Message::Text(text)) => match serde_json::from_str::<InputEvent>(&text) {
+                Ok(event) => {
+                    info!("Input event received: {:?}", event);
+                    if state.input_tx.send(event).await.is_err() {
+                        warn!("Input channel closed");
+                        break;
                     }
                 }
-            }
+                Err(e) => {
+                    warn!("Invalid input event: {} - raw: {}", e, text);
+                }
+            },
             Ok(Message::Close(_)) => break,
             Ok(Message::Ping(data)) => {
                 if sender.send(Message::Pong(data)).await.is_err() {

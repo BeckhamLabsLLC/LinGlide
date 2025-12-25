@@ -11,7 +11,9 @@ use linglide_discovery::ServiceAdvertiser;
 use linglide_encoder::pipeline::StreamSegment;
 use linglide_encoder::EncodingPipeline;
 use linglide_input::{mouse::RelativeMouse, VirtualMouse, VirtualStylus, VirtualTouchscreen};
-use linglide_server::{broadcast::AppState, create_router, create_rustls_config, CertificateManager};
+use linglide_server::{
+    broadcast::AppState, create_router, create_rustls_config, CertificateManager,
+};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -167,9 +169,15 @@ impl ServerController {
             }
         };
 
-        let pairing_manager = Arc::new(PairingManager::new(device_storage.clone(), server_url.clone()));
+        let pairing_manager = Arc::new(PairingManager::new(
+            device_storage.clone(),
+            server_url.clone(),
+        ));
         let paired_devices = pairing_manager.list_devices().await;
-        info!("Authentication: ENABLED ({} paired devices)", paired_devices.len());
+        info!(
+            "Authentication: ENABLED ({} paired devices)",
+            paired_devices.len()
+        );
 
         // Create shared context
         let context = Arc::new(RwLock::new(ServerContext {
@@ -314,7 +322,11 @@ async fn run_server(
     match std::net::TcpListener::bind(addr) {
         Ok(listener) => drop(listener), // Port is free, release it
         Err(e) => {
-            return Err(anyhow::anyhow!("Port {} is already in use: {}", config.port, e));
+            return Err(anyhow::anyhow!(
+                "Port {} is already in use: {}",
+                config.port,
+                e
+            ));
         }
     }
 
@@ -336,7 +348,11 @@ async fn run_server(
                     .collect();
 
                 if advertiser
-                    .start(env!("CARGO_PKG_VERSION"), Some(&fingerprint), Some(addresses))
+                    .start(
+                        env!("CARGO_PKG_VERSION"),
+                        Some(&fingerprint),
+                        Some(addresses),
+                    )
                     .is_ok()
                 {
                     info!("mDNS: Advertising as '{}'", advertiser.instance_name());
@@ -409,8 +425,7 @@ async fn run_server(
         })
     } else {
         let frame_tx = frame_tx.clone();
-        let mut capture =
-            ScreenCapture::new(capture_config.width, capture_config.height, 0, 0)?;
+        let mut capture = ScreenCapture::new(capture_config.width, capture_config.height, 0, 0)?;
 
         tokio::spawn(async move {
             loop {
@@ -526,7 +541,9 @@ async fn run_server(
                     tilt_y,
                 } => stylus.pen_move(x, y, pressure, tilt_x, tilt_y),
                 InputEvent::PenUp { x, y } => stylus.pen_up(x, y),
-                InputEvent::PenButtonEvent { button, pressed } => stylus.pen_button(button, pressed),
+                InputEvent::PenButtonEvent { button, pressed } => {
+                    stylus.pen_button(button, pressed)
+                }
             };
 
             if let Err(e) = result {

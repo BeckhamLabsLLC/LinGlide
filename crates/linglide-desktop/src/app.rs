@@ -153,8 +153,7 @@ impl LinGlideApp {
 
         let elapsed = self.last_countdown_update.elapsed().as_secs() as i64;
         if elapsed > 0 {
-            self.pairing_state.expires_in =
-                (self.pairing_state.expires_in - elapsed).max(0);
+            self.pairing_state.expires_in = (self.pairing_state.expires_in - elapsed).max(0);
             self.last_countdown_update = Instant::now();
 
             // If expired, clear pairing state

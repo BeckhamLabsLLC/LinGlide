@@ -38,7 +38,10 @@ pub enum UiEvent {
     /// mDNS advertisement status changed
     MdnsStatus { active: bool },
     /// USB/ADB status changed
-    UsbStatus { connected: bool, device_count: usize },
+    UsbStatus {
+        connected: bool,
+        device_count: usize,
+    },
 }
 
 /// Commands from the UI to the server/async side

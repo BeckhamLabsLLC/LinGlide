@@ -1,8 +1,8 @@
 //! Async encoding pipeline
 
-use crate::{H264Encoder, Fmp4Muxer};
-use linglide_core::Result;
+use crate::{Fmp4Muxer, H264Encoder};
 use linglide_capture::Frame;
+use linglide_core::Result;
 use tokio::sync::{broadcast, mpsc};
 use tracing::{debug, info, warn};
 
@@ -72,7 +72,9 @@ impl EncodingPipeline {
     pub fn encode_frame(&mut self, frame: &Frame) -> Result<StreamSegment> {
         let encoded = self.encoder.encode(frame.data())?;
         let is_keyframe = encoded.is_keyframe;
-        let segment_data = self.muxer.create_media_segment(&encoded, self.frame_duration);
+        let segment_data = self
+            .muxer
+            .create_media_segment(&encoded, self.frame_duration);
 
         Ok(StreamSegment {
             data: segment_data,

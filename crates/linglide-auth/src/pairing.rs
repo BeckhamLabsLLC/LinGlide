@@ -184,7 +184,10 @@ impl PairingManager {
     }
 
     /// Verify a PIN and complete pairing
-    pub async fn verify_pin(&self, request: PairingVerifyRequest) -> PairingResult<PairingVerifyResponse> {
+    pub async fn verify_pin(
+        &self,
+        request: PairingVerifyRequest,
+    ) -> PairingResult<PairingVerifyResponse> {
         // Find and validate session
         let session = {
             let sessions = self.sessions.read().await;
@@ -232,7 +235,11 @@ impl PairingManager {
         sessions.get(session_id).map(|s| {
             // Truncate fingerprint to first 20 chars for QR code
             let fp = self.cert_fingerprint.as_ref().map(|f| {
-                if f.len() > 20 { f[..20].to_string() } else { f.clone() }
+                if f.len() > 20 {
+                    f[..20].to_string()
+                } else {
+                    f.clone()
+                }
             });
 
             QrCodeData {

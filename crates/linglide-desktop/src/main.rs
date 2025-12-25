@@ -20,9 +20,8 @@ use tracing_subscriber::EnvFilter;
 fn main() -> anyhow::Result<()> {
     // Initialize logging with filter to suppress noisy EVDI buffer timeout warnings
     // EVDI logs warnings every 50ms when screen content hasn't changed (expected behavior)
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new("info,evdi=error")
-    });
+    let filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info,evdi=error"));
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -74,7 +73,10 @@ fn load_icon() -> egui::IconData {
     // Try to load from PNG file
     let icon_paths = [
         // Development path (relative to crate)
-        concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/linglide-icon.png"),
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/assets/icons/linglide-icon.png"
+        ),
         // Installed paths (Linux standard locations)
         "/usr/share/icons/hicolor/256x256/apps/linglide.png",
         "/usr/share/pixmaps/linglide.png",
@@ -119,7 +121,7 @@ fn generate_fallback_icon() -> egui::IconData {
 
             if dist < (size as f32 / 2.0 - 4.0) {
                 // Blue color matching theme
-                rgba.push(59);  // R
+                rgba.push(59); // R
                 rgba.push(130); // G
                 rgba.push(246); // B
                 rgba.push(255); // A

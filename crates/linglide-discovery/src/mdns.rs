@@ -30,8 +30,7 @@ impl ServiceAdvertiser {
     /// * `port` - The port the LinGlide server is running on
     /// * `instance_name` - Optional custom instance name (defaults to hostname-based name)
     pub fn new(port: u16, instance_name: Option<String>) -> DiscoveryResult<Self> {
-        let daemon = ServiceDaemon::new()
-            .map_err(|e| DiscoveryError::Mdns(e.to_string()))?;
+        let daemon = ServiceDaemon::new().map_err(|e| DiscoveryError::Mdns(e.to_string()))?;
 
         let instance_name = instance_name.unwrap_or_else(|| {
             let hostname = hostname::get()
@@ -78,7 +77,12 @@ impl ServiceAdvertiser {
                 SERVICE_TYPE,
                 &self.instance_name,
                 &format!("{}.local.", self.instance_name),
-                addrs.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(",").as_str(),
+                addrs
+                    .iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+                    .as_str(),
                 self.port,
                 properties,
             )

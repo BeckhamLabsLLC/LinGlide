@@ -24,7 +24,7 @@ impl VirtualMouse {
             width,
             height,
             offset_x,
-            offset_y
+            offset_y,
         )?;
 
         Ok(Self {

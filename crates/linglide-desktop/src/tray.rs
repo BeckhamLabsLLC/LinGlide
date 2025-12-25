@@ -48,7 +48,8 @@ impl TrayManager {
         let start_item = MenuItem::with_id(menu_ids::START_SERVER, "Start Server", true, None);
         let stop_item = MenuItem::with_id(menu_ids::STOP_SERVER, "Stop Server", false, None);
         let qr_item = MenuItem::with_id(menu_ids::SHOW_QR, "Show QR Code", false, None);
-        let devices_item = MenuItem::with_id(menu_ids::MANAGE_DEVICES, "Manage Devices", true, None);
+        let devices_item =
+            MenuItem::with_id(menu_ids::MANAGE_DEVICES, "Manage Devices", true, None);
         let settings_item = MenuItem::with_id(menu_ids::SETTINGS, "Settings", true, None);
         let quit_item = MenuItem::with_id(menu_ids::QUIT, "Quit", true, None);
 
@@ -125,9 +126,9 @@ impl TrayManager {
         // Create a simple colored icon based on state
         // In production, these would be loaded from PNG files
         let (r, g, b) = match state {
-            TrayState::Idle => (128, 128, 128),     // Gray
-            TrayState::Waiting => (255, 200, 0),    // Yellow
-            TrayState::Connected => (0, 200, 100),  // Green
+            TrayState::Idle => (128, 128, 128),    // Gray
+            TrayState::Waiting => (255, 200, 0),   // Yellow
+            TrayState::Connected => (0, 200, 100), // Green
         };
 
         // Create a 32x32 RGBA icon

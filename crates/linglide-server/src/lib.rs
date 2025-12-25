@@ -9,7 +9,7 @@ pub mod websocket;
 
 pub use http::create_router;
 pub use tls::{
-    generate_self_signed_cert, create_rustls_config, create_rustls_config_from_files,
-    CertificateManager, calculate_cert_fingerprint,
+    calculate_cert_fingerprint, create_rustls_config, create_rustls_config_from_files,
+    generate_self_signed_cert, CertificateManager,
 };
-pub use websocket::{handle_video_socket, handle_input_socket};
+pub use websocket::{handle_input_socket, handle_video_socket};

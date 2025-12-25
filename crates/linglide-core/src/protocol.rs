@@ -177,15 +177,11 @@ pub enum ServerMessage {
         codec_data: Option<String>,
     },
     /// Error message
-    Error {
-        message: String,
-    },
+    Error { message: String },
     /// Server is ready to stream
     Ready,
     /// Ping for connection keepalive
-    Ping {
-        timestamp: u64,
-    },
+    Ping { timestamp: u64 },
 }
 
 /// Client-to-server control messages
@@ -195,13 +191,9 @@ pub enum ClientMessage {
     /// Client is ready to receive video
     Ready,
     /// Pong response to ping
-    Pong {
-        timestamp: u64,
-    },
+    Pong { timestamp: u64 },
     /// Request quality change
-    SetQuality {
-        bitrate: u32,
-    },
+    SetQuality { bitrate: u32 },
 }
 
 /// Frame metadata for video synchronization

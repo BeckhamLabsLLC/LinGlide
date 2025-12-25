@@ -29,7 +29,10 @@ impl Fmp4Muxer {
     /// Get the codec string for WebCodecs (avc1.PPCCLL format)
     pub fn get_codec_string(&self) -> String {
         if self.sps.len() >= 4 {
-            format!("avc1.{:02x}{:02x}{:02x}", self.sps[1], self.sps[2], self.sps[3])
+            format!(
+                "avc1.{:02x}{:02x}{:02x}",
+                self.sps[1], self.sps[2], self.sps[3]
+            )
         } else {
             // Fallback: High profile, level 4.2
             "avc1.64002a".to_string()
@@ -40,9 +43,21 @@ impl Fmp4Muxer {
     pub fn get_avcc_data(&self) -> Vec<u8> {
         let mut buf = BytesMut::new();
         buf.put_u8(1); // version
-        buf.put_u8(if self.sps.len() > 1 { self.sps[1] } else { 0x64 }); // profile
-        buf.put_u8(if self.sps.len() > 2 { self.sps[2] } else { 0x00 }); // profile compat
-        buf.put_u8(if self.sps.len() > 3 { self.sps[3] } else { 0x2a }); // level
+        buf.put_u8(if self.sps.len() > 1 {
+            self.sps[1]
+        } else {
+            0x64
+        }); // profile
+        buf.put_u8(if self.sps.len() > 2 {
+            self.sps[2]
+        } else {
+            0x00
+        }); // profile compat
+        buf.put_u8(if self.sps.len() > 3 {
+            self.sps[3]
+        } else {
+            0x2a
+        }); // level
         buf.put_u8(0xFF); // length size minus one (3 = 4 bytes)
         buf.put_u8(0xE1); // num SPS (1)
         buf.put_u16(self.sps.len() as u16);
@@ -58,12 +73,17 @@ impl Fmp4Muxer {
         let mut i = 0;
         while i + 4 < headers.len() {
             // Look for start codes
-            if headers[i] == 0 && headers[i + 1] == 0 && headers[i + 2] == 0 && headers[i + 3] == 1 {
+            if headers[i] == 0 && headers[i + 1] == 0 && headers[i + 2] == 0 && headers[i + 3] == 1
+            {
                 let start = i + 4;
                 // Find next start code or end
                 let mut end = headers.len();
                 for j in start..headers.len().saturating_sub(3) {
-                    if headers[j] == 0 && headers[j + 1] == 0 && headers[j + 2] == 0 && headers[j + 3] == 1 {
+                    if headers[j] == 0
+                        && headers[j + 1] == 0
+                        && headers[j + 2] == 0
+                        && headers[j + 3] == 1
+                    {
                         end = j;
                         break;
                     }
@@ -147,7 +167,7 @@ impl Fmp4Muxer {
         content.put_u16(0x0100); // volume (1.0)
         content.put_u16(0); // reserved
         content.put_u64(0); // reserved
-        // Matrix (identity)
+                            // Matrix (identity)
         content.put_u32(0x00010000);
         content.put_u32(0);
         content.put_u32(0);
@@ -186,7 +206,7 @@ impl Fmp4Muxer {
         content.put_u16(0); // alternate group
         content.put_u16(0); // volume
         content.put_u16(0); // reserved
-        // Matrix (identity)
+                            // Matrix (identity)
         content.put_u32(0x00010000);
         content.put_u32(0);
         content.put_u32(0);
@@ -323,9 +343,21 @@ impl Fmp4Muxer {
     fn write_avcc(&self, buf: &mut BytesMut) {
         let mut content = BytesMut::new();
         content.put_u8(1); // version
-        content.put_u8(if self.sps.len() > 1 { self.sps[1] } else { 0x64 }); // profile
-        content.put_u8(if self.sps.len() > 2 { self.sps[2] } else { 0x00 }); // profile compat
-        content.put_u8(if self.sps.len() > 3 { self.sps[3] } else { 0x1F }); // level
+        content.put_u8(if self.sps.len() > 1 {
+            self.sps[1]
+        } else {
+            0x64
+        }); // profile
+        content.put_u8(if self.sps.len() > 2 {
+            self.sps[2]
+        } else {
+            0x00
+        }); // profile compat
+        content.put_u8(if self.sps.len() > 3 {
+            self.sps[3]
+        } else {
+            0x1F
+        }); // level
         content.put_u8(0xFF); // length size minus one (3 = 4 bytes)
         content.put_u8(0xE1); // num SPS (1)
         content.put_u16(self.sps.len() as u16);

@@ -38,7 +38,7 @@ impl VirtualStylus {
             width,
             height,
             offset_x,
-            offset_y
+            offset_y,
         )?;
 
         Ok(Self {
@@ -73,12 +73,22 @@ impl VirtualStylus {
     }
 
     /// Handle pen hover event (pen in range but not touching)
-    pub fn pen_hover(&mut self, x: f64, y: f64, _pressure: f64, tilt_x: f64, tilt_y: f64) -> Result<()> {
+    pub fn pen_hover(
+        &mut self,
+        x: f64,
+        y: f64,
+        _pressure: f64,
+        tilt_x: f64,
+        tilt_y: f64,
+    ) -> Result<()> {
         let (abs_x, abs_y) = self.to_absolute(x, y);
         let tilt_x_val = self.to_tilt(tilt_x);
         let tilt_y_val = self.to_tilt(tilt_y);
 
-        debug!("Pen hover: pos=({}, {}), tilt=({}, {})", abs_x, abs_y, tilt_x_val, tilt_y_val);
+        debug!(
+            "Pen hover: pos=({}, {}), tilt=({}, {})",
+            abs_x, abs_y, tilt_x_val, tilt_y_val
+        );
 
         let mut events = Vec::new();
 
@@ -87,22 +97,54 @@ impl VirtualStylus {
             self.in_range = true;
             // Set tool type
             if self.eraser_mode {
-                events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_RUBBER.0, 1));
+                events.push(InputEvent::new(
+                    EventType::KEY.0,
+                    KeyCode::BTN_TOOL_RUBBER.0,
+                    1,
+                ));
             } else {
-                events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_PEN.0, 1));
+                events.push(InputEvent::new(
+                    EventType::KEY.0,
+                    KeyCode::BTN_TOOL_PEN.0,
+                    1,
+                ));
             }
         }
 
         // Position
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_X.0, abs_x));
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_Y.0, abs_y));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_X.0,
+            abs_x,
+        ));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_Y.0,
+            abs_y,
+        ));
         // Pressure (0 for hover)
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_PRESSURE.0, 0));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_PRESSURE.0,
+            0,
+        ));
         // Tilt
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_X.0, tilt_x_val));
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_Y.0, tilt_y_val));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_TILT_X.0,
+            tilt_x_val,
+        ));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_TILT_Y.0,
+            tilt_y_val,
+        ));
         // Distance (hovering close to surface)
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_DISTANCE.0, 50));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_DISTANCE.0,
+            50,
+        ));
         // Sync
         events.push(InputEvent::new(EventType::SYNCHRONIZATION.0, 0, 0));
 
@@ -138,9 +180,17 @@ impl VirtualStylus {
             if self.in_range {
                 // Exit current tool
                 if self.eraser_mode {
-                    events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_RUBBER.0, 0));
+                    events.push(InputEvent::new(
+                        EventType::KEY.0,
+                        KeyCode::BTN_TOOL_RUBBER.0,
+                        0,
+                    ));
                 } else {
-                    events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_PEN.0, 0));
+                    events.push(InputEvent::new(
+                        EventType::KEY.0,
+                        KeyCode::BTN_TOOL_PEN.0,
+                        0,
+                    ));
                 }
             }
             self.eraser_mode = new_eraser_mode;
@@ -152,21 +202,53 @@ impl VirtualStylus {
         }
         // Set tool type
         if self.eraser_mode {
-            events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_RUBBER.0, 1));
+            events.push(InputEvent::new(
+                EventType::KEY.0,
+                KeyCode::BTN_TOOL_RUBBER.0,
+                1,
+            ));
         } else {
-            events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_PEN.0, 1));
+            events.push(InputEvent::new(
+                EventType::KEY.0,
+                KeyCode::BTN_TOOL_PEN.0,
+                1,
+            ));
         }
 
         // Position
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_X.0, abs_x));
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_Y.0, abs_y));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_X.0,
+            abs_x,
+        ));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_Y.0,
+            abs_y,
+        ));
         // Pressure
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_PRESSURE.0, pressure_val));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_PRESSURE.0,
+            pressure_val,
+        ));
         // Tilt
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_X.0, tilt_x_val));
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_Y.0, tilt_y_val));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_TILT_X.0,
+            tilt_x_val,
+        ));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_TILT_Y.0,
+            tilt_y_val,
+        ));
         // Distance (touching surface)
-        events.push(InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_DISTANCE.0, 0));
+        events.push(InputEvent::new(
+            EventType::ABSOLUTE.0,
+            AbsoluteAxisCode::ABS_DISTANCE.0,
+            0,
+        ));
         // Touch down
         events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOUCH.0, 1));
         // Sync
@@ -177,7 +259,14 @@ impl VirtualStylus {
     }
 
     /// Handle pen move event (while touching)
-    pub fn pen_move(&mut self, x: f64, y: f64, pressure: f64, tilt_x: f64, tilt_y: f64) -> Result<()> {
+    pub fn pen_move(
+        &mut self,
+        x: f64,
+        y: f64,
+        pressure: f64,
+        tilt_x: f64,
+        tilt_y: f64,
+    ) -> Result<()> {
         if !self.tip_down {
             // If not touching, treat as hover
             return self.pen_hover(x, y, pressure, tilt_x, tilt_y);
@@ -198,10 +287,22 @@ impl VirtualStylus {
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_X.0, abs_x),
             InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_Y.0, abs_y),
             // Pressure
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_PRESSURE.0, pressure_val),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_PRESSURE.0,
+                pressure_val,
+            ),
             // Tilt
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_X.0, tilt_x_val),
-            InputEvent::new(EventType::ABSOLUTE.0, AbsoluteAxisCode::ABS_TILT_Y.0, tilt_y_val),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_TILT_X.0,
+                tilt_x_val,
+            ),
+            InputEvent::new(
+                EventType::ABSOLUTE.0,
+                AbsoluteAxisCode::ABS_TILT_Y.0,
+                tilt_y_val,
+            ),
             // Sync
             InputEvent::new(EventType::SYNCHRONIZATION.0, 0, 0),
         ];
@@ -265,9 +366,17 @@ impl VirtualStylus {
 
         // Exit tool
         if self.eraser_mode {
-            events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_RUBBER.0, 0));
+            events.push(InputEvent::new(
+                EventType::KEY.0,
+                KeyCode::BTN_TOOL_RUBBER.0,
+                0,
+            ));
         } else {
-            events.push(InputEvent::new(EventType::KEY.0, KeyCode::BTN_TOOL_PEN.0, 0));
+            events.push(InputEvent::new(
+                EventType::KEY.0,
+                KeyCode::BTN_TOOL_PEN.0,
+                0,
+            ));
         }
 
         // Sync

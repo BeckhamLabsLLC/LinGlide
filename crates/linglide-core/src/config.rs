@@ -33,7 +33,10 @@ impl std::str::FromStr for DisplayPosition {
             "left-of" | "left" => Ok(DisplayPosition::LeftOf),
             "above" | "top" => Ok(DisplayPosition::Above),
             "below" | "bottom" => Ok(DisplayPosition::Below),
-            _ => Err(format!("Invalid position: {}. Use: right-of, left-of, above, below", s)),
+            _ => Err(format!(
+                "Invalid position: {}. Use: right-of, left-of, above, below",
+                s
+            )),
         }
     }
 }

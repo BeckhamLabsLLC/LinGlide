@@ -116,7 +116,9 @@ impl H264Encoder {
         let pts = self.frame_count;
 
         // Encode the frame
-        let (data, _pic) = self.encoder.encode(pts, image)
+        let (data, _pic) = self
+            .encoder
+            .encode(pts, image)
             .map_err(|_| Error::EncoderError("Encoding failed".to_string()))?;
 
         let bytes = data.entirety().to_vec();
@@ -124,7 +126,11 @@ impl H264Encoder {
 
         // Debug first frame to understand NAL format
         if self.frame_count == 0 {
-            let preview: Vec<String> = bytes.iter().take(32).map(|b| format!("{:02x}", b)).collect();
+            let preview: Vec<String> = bytes
+                .iter()
+                .take(32)
+                .map(|b| format!("{:02x}", b))
+                .collect();
             debug!("First frame NAL preview: {}", preview.join(" "));
         }
 
@@ -154,7 +160,10 @@ impl H264Encoder {
 
         // Look for NAL units with 4-byte start code
         for i in 0..bytes.len().saturating_sub(4) {
-            if bytes[i] == 0 && bytes[i + 1] == 0 && bytes[i + 2] == 0 && bytes[i + 3] == 1
+            if bytes[i] == 0
+                && bytes[i + 1] == 0
+                && bytes[i + 2] == 0
+                && bytes[i + 3] == 1
                 && i + 4 < bytes.len()
             {
                 let nal_type = bytes[i + 4] & 0x1F;
@@ -171,7 +180,9 @@ impl H264Encoder {
         // Also check 3-byte start codes
         for i in 0..bytes.len().saturating_sub(3) {
             // Make sure this isn't part of a 4-byte start code
-            if bytes[i] == 0 && bytes[i + 1] == 0 && bytes[i + 2] == 1
+            if bytes[i] == 0
+                && bytes[i + 1] == 0
+                && bytes[i + 2] == 1
                 && (i == 0 || bytes[i - 1] != 0)
                 && i + 3 < bytes.len()
             {
@@ -198,7 +209,9 @@ impl H264Encoder {
 
     /// Get encoder headers (SPS/PPS)
     pub fn get_headers(&mut self) -> Result<Vec<u8>> {
-        let headers = self.encoder.headers()
+        let headers = self
+            .encoder
+            .headers()
             .map_err(|_| Error::EncoderError("Failed to get headers".to_string()))?;
         Ok(headers.entirety().to_vec())
     }

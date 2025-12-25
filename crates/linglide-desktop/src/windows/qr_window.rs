@@ -135,10 +135,6 @@ impl QrWindow {
             pixels,
         };
 
-        Some(ctx.load_texture(
-            "qr_code",
-            color_image,
-            TextureOptions::NEAREST,
-        ))
+        Some(ctx.load_texture("qr_code", color_image, TextureOptions::NEAREST))
     }
 }

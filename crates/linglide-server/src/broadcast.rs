@@ -72,7 +72,10 @@ impl AppState {
     /// Set the codec configuration
     pub fn set_codec_config(&self, codec_string: String, avcc_data: Vec<u8>) {
         if let Ok(mut guard) = self.codec_config.write() {
-            *guard = Some(CodecConfig { codec_string, avcc_data });
+            *guard = Some(CodecConfig {
+                codec_string,
+                avcc_data,
+            });
         }
     }
 
