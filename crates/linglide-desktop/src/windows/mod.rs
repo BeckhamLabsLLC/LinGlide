@@ -292,6 +292,38 @@ impl MainWindow {
                         });
                     }
 
+                    if let Some(pin) = &status.pin {
+                        ui.add_space(8.0);
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new("PIN:")
+                                    .font(typography::body())
+                                    .color(colors::TEXT_SECONDARY),
+                            );
+                            ui.add_space(4.0);
+                            ui.label(
+                                RichText::new(pin)
+                                    .strong()
+                                    .color(colors::SUCCESS)
+                                    .monospace(),
+                            );
+                            if ui
+                                .small_button("\u{1F4CB}")
+                                .on_hover_text("Copy PIN")
+                                .clicked()
+                            {
+                                ui.output_mut(|o| o.copied_text = pin.clone());
+                            }
+                            if ui
+                                .small_button("\u{1F504}")
+                                .on_hover_text("Generate new PIN")
+                                .clicked()
+                            {
+                                let _ = command_tx.try_send(UiCommand::RefreshPin);
+                            }
+                        });
+                    }
+
                     ui.add_space(4.0);
                     ui.horizontal(|ui| {
                         ui.label(

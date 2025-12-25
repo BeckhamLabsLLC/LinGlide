@@ -101,6 +101,25 @@ export class ApiClient {
     }
 
     /**
+     * Verify PIN directly without session (for persistent PIN)
+     * This is used when users navigate directly to the server URL and enter the PIN.
+     * @param {string} pin
+     * @param {string} deviceName
+     * @param {string} [deviceType]
+     * @returns {Promise<PairingVerifyResponse>}
+     */
+    async verifyPinDirect(pin, deviceName, deviceType = 'browser') {
+        return this.request('/api/pair/verify-direct', {
+            method: 'POST',
+            body: JSON.stringify({
+                pin,
+                device_name: deviceName,
+                device_type: deviceType
+            })
+        });
+    }
+
+    /**
      * Get pairing session status
      * @param {string} sessionId
      * @returns {Promise<PairingStatus>}

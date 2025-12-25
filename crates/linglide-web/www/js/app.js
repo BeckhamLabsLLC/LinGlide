@@ -159,15 +159,6 @@ class LinGlideApp {
                         </svg>
                         Enter PIN
                     </button>
-
-                    <button class="pair-btn pair-btn--secondary" id="btn-manual">
-                        <svg class="pair-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M2 12h20"/>
-                            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-                        </svg>
-                        Enter Server URL
-                    </button>
                 </div>
 
                 ${this.renderServerHistory()}
@@ -181,10 +172,6 @@ class LinGlideApp {
 
         document.getElementById('btn-enter-pin')?.addEventListener('click', () => {
             pairingController.showPinEntry();
-        });
-
-        document.getElementById('btn-manual')?.addEventListener('click', () => {
-            pairingController.showServerEntry();
         });
 
         // Bind history items
@@ -248,17 +235,8 @@ class LinGlideApp {
 
         const pinEntry = new PinEntry(this.container, {
             onSubmit: async (pin, serverUrl) => {
-                // We need to get/create a session first, then verify
-                await pairingController.connectToServer(serverUrl);
-
-                // If we have a session, verify the PIN
-                if (pairingController.pairingSession) {
-                    await pairingController.verifyPin(
-                        serverUrl,
-                        pairingController.pairingSession.sessionId,
-                        pin
-                    );
-                }
+                // Use direct PIN verification (no session required)
+                await pairingController.connectAndVerifyPin(serverUrl, pin);
             },
             onCancel: () => {
                 pairingController.cancel();

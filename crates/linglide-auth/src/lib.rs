@@ -39,7 +39,8 @@ pub mod storage;
 
 pub use device::{Device, DeviceId, DeviceInfo, DeviceType};
 pub use pairing::{
-    hash_token, PairingError, PairingManager, PairingResult, PairingStartResponse,
-    PairingVerifyRequest, PairingVerifyResponse, QrCodeData, PIN_VALIDITY_SECONDS,
+    hash_token, DirectVerifyRequest, PairingError, PairingManager, PairingResult,
+    PairingStartResponse, PairingVerifyRequest, PairingVerifyResponse, PersistentPinResponse,
+    QrCodeData, PIN_VALIDITY_SECONDS,
 };
 pub use storage::{DeviceStorage, StorageError, StorageResult};

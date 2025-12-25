@@ -74,11 +74,13 @@ impl LinGlideApp {
                 url,
                 fingerprint,
                 paired_devices,
+                pin,
             } => {
                 info!("Server started: {}", url);
                 self.server_status.running = true;
                 self.server_url = Some(url.clone());
                 self.server_status.url = Some(url);
+                self.server_status.pin = Some(pin);
                 self.cert_fingerprint = Some(fingerprint);
                 self.paired_devices = paired_devices.clone();
                 self.server_status.paired_device_count = paired_devices.len();
@@ -89,10 +91,15 @@ impl LinGlideApp {
                     let _ = self.bridge.command_tx.try_send(UiCommand::StartPairing);
                 }
             }
+            UiEvent::PinRefreshed { pin } => {
+                info!("PIN refreshed");
+                self.server_status.pin = Some(pin);
+            }
             UiEvent::ServerStopped => {
                 info!("Server stopped");
                 self.server_status.running = false;
                 self.server_status.url = None;
+                self.server_status.pin = None;
                 self.server_status.connected_devices.clear();
                 self.pairing_state = PairingState::default();
             }

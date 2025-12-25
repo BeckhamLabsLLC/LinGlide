@@ -16,9 +16,12 @@ pub enum UiEvent {
         url: String,
         fingerprint: String,
         paired_devices: Vec<Device>,
+        pin: String,
     },
     /// Server stopped
     ServerStopped,
+    /// Persistent PIN was refreshed
+    PinRefreshed { pin: String },
     /// Server failed to start
     ServerError { message: String },
     /// New device connected
@@ -62,6 +65,8 @@ pub enum UiCommand {
     SetMdns { enabled: bool },
     /// Enable/disable USB/ADB forwarding
     SetUsb { enabled: bool },
+    /// Refresh the persistent PIN
+    RefreshPin,
     /// Shutdown the application
     Shutdown,
 }
@@ -71,6 +76,7 @@ pub enum UiCommand {
 pub struct ServerStatus {
     pub running: bool,
     pub url: Option<String>,
+    pub pin: Option<String>,
     pub connected_devices: Vec<Device>,
     pub paired_device_count: usize,
     pub mdns_active: bool,

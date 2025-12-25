@@ -105,6 +105,25 @@ pub struct PairingVerifyResponse {
     pub token: String,
 }
 
+/// Request to verify PIN directly (without session)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DirectVerifyRequest {
+    /// The PIN entered by user
+    pub pin: String,
+    /// Device name provided by client
+    pub device_name: String,
+    /// Device type hint
+    #[serde(default)]
+    pub device_type: Option<String>,
+}
+
+/// Response containing the persistent PIN
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PersistentPinResponse {
+    /// The 6-digit PIN
+    pub pin: String,
+}
+
 /// QR code data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QrCodeData {
@@ -132,6 +151,8 @@ pub struct PairingManager {
     server_url: String,
     /// Certificate fingerprint for QR codes
     cert_fingerprint: Option<String>,
+    /// Persistent PIN for direct entry (valid for server lifetime)
+    persistent_pin: Arc<RwLock<String>>,
 }
 
 impl PairingManager {
@@ -142,6 +163,7 @@ impl PairingManager {
             storage,
             server_url,
             cert_fingerprint: None,
+            persistent_pin: Arc::new(RwLock::new(generate_pin())),
         }
     }
 
@@ -156,12 +178,64 @@ impl PairingManager {
             storage,
             server_url,
             cert_fingerprint: fingerprint,
+            persistent_pin: Arc::new(RwLock::new(generate_pin())),
         }
     }
 
     /// Set the certificate fingerprint
     pub fn set_fingerprint(&mut self, fingerprint: Option<String>) {
         self.cert_fingerprint = fingerprint;
+    }
+
+    /// Get the persistent PIN (valid for entire server lifetime)
+    pub async fn get_persistent_pin(&self) -> String {
+        self.persistent_pin.read().await.clone()
+    }
+
+    /// Regenerate the persistent PIN
+    pub async fn refresh_persistent_pin(&self) -> String {
+        let mut pin = self.persistent_pin.write().await;
+        *pin = generate_pin();
+        info!("Persistent PIN refreshed");
+        pin.clone()
+    }
+
+    /// Verify PIN directly without requiring a session
+    /// This is for direct PIN entry when user navigates to the URL
+    pub async fn verify_persistent_pin(
+        &self,
+        request: DirectVerifyRequest,
+    ) -> PairingResult<PairingVerifyResponse> {
+        let persistent = self.persistent_pin.read().await;
+
+        if *persistent != request.pin {
+            warn!("Invalid persistent PIN attempt");
+            return Err(PairingError::InvalidPin);
+        }
+
+        // Generate auth token
+        let token = generate_token();
+        let token_hash = hash_token(&token);
+
+        // Create device
+        let device_type = request
+            .device_type
+            .as_deref()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(DeviceType::Unknown);
+
+        let device = Device::new(request.device_name, device_type, token_hash);
+        let device_id = device.id.to_string();
+
+        // Save device
+        self.storage.save_device(device).await?;
+
+        info!(
+            "Device {} paired successfully via persistent PIN",
+            device_id
+        );
+
+        Ok(PairingVerifyResponse { device_id, token })
     }
 
     /// Start a new pairing session
@@ -293,6 +367,13 @@ impl PairingManager {
             (s.pin.clone(), remaining)
         })
     }
+}
+
+/// Generate a 6-digit PIN
+fn generate_pin() -> String {
+    let mut rng = rand::thread_rng();
+    let pin: u32 = rng.gen_range(0..1_000_000);
+    format!("{:06}", pin)
 }
 
 /// Generate a secure random token

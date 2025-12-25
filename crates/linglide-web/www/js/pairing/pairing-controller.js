@@ -210,7 +210,7 @@ export class PairingController {
     }
 
     /**
-     * Verify a pairing PIN
+     * Verify a pairing PIN (session-based, for QR code flow)
      * @param {string} serverUrl
      * @param {string} sessionId
      * @param {string} pin
@@ -242,6 +242,57 @@ export class PairingController {
             console.error('PIN verification failed:', error);
             if (error instanceof ApiError && error.status === 401) {
                 throw new Error('Invalid or expired PIN');
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Connect to a server and verify PIN directly (for persistent PIN flow)
+     * This is used when users navigate directly to the server URL and enter the PIN.
+     * @param {string} serverUrl
+     * @param {string} pin
+     */
+    async connectAndVerifyPin(serverUrl, pin) {
+        try {
+            // Normalize URL
+            if (!serverUrl.startsWith('http')) {
+                serverUrl = 'https://' + serverUrl;
+            }
+
+            const api = new ApiClient(serverUrl);
+
+            // Verify server is reachable
+            const info = await api.getServerInfo();
+
+            if (info.auth_required) {
+                // Use direct PIN verification (no session needed)
+                const deviceName = this.getDeviceName();
+                const deviceType = this.getDeviceType();
+
+                const result = await api.verifyPinDirect(pin, deviceName, deviceType);
+
+                // Store credentials
+                storage.setCredentials(result.device_id, result.token);
+                storage.setLastServer(serverUrl, info.cert_fingerprint);
+
+                // Update state
+                actions.setPaired(result.device_id, result.token);
+                actions.setServer(serverUrl, info.cert_fingerprint);
+                actions.setView(AppView.CONNECTING);
+
+                return true;
+            } else {
+                // No auth required, connect directly
+                actions.setServer(serverUrl, info.cert_fingerprint);
+                storage.setLastServer(serverUrl, info.cert_fingerprint);
+                actions.setView(AppView.CONNECTING);
+                return true;
+            }
+        } catch (error) {
+            console.error('PIN verification failed:', error);
+            if (error instanceof ApiError && error.status === 401) {
+                throw new Error('Invalid PIN');
             }
             throw error;
         }

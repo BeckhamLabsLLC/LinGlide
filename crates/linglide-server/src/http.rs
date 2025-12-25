@@ -11,7 +11,8 @@ use axum::{
 };
 use image::ImageFormat;
 use linglide_auth::{
-    DeviceInfo, PairingStartResponse, PairingVerifyRequest, PairingVerifyResponse,
+    DeviceInfo, DirectVerifyRequest, PairingStartResponse, PairingVerifyRequest,
+    PairingVerifyResponse, PersistentPinResponse,
 };
 use linglide_discovery::DiscoveryInfo;
 use linglide_web::Assets;
@@ -37,6 +38,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         // Pairing API
         .route("/api/pair/start", post(pair_start_handler))
         .route("/api/pair/verify", post(pair_verify_handler))
+        .route("/api/pair/verify-direct", post(pair_verify_direct_handler))
+        .route("/api/pair/pin", get(pair_pin_handler))
+        .route("/api/pair/pin/refresh", post(pair_pin_refresh_handler))
         .route("/api/pair/qr", get(pair_qr_handler))
         .route("/api/pair/status", get(pair_status_handler))
         // Device management API
@@ -117,6 +121,38 @@ async fn pair_verify_handler(
         .await
         .map(Json)
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
+}
+
+/// Verify PIN directly without requiring a session
+///
+/// This is for direct PIN entry when users navigate to the server URL.
+/// Uses the persistent PIN that is valid for the server's lifetime.
+async fn pair_verify_direct_handler(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<DirectVerifyRequest>,
+) -> Result<Json<PairingVerifyResponse>, (StatusCode, String)> {
+    state
+        .pairing_manager
+        .verify_persistent_pin(request)
+        .await
+        .map(Json)
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
+}
+
+/// Get the persistent PIN
+///
+/// Returns the PIN that is valid for the server's lifetime.
+async fn pair_pin_handler(State(state): State<Arc<AppState>>) -> Json<PersistentPinResponse> {
+    let pin = state.pairing_manager.get_persistent_pin().await;
+    Json(PersistentPinResponse { pin })
+}
+
+/// Refresh (regenerate) the persistent PIN
+async fn pair_pin_refresh_handler(
+    State(state): State<Arc<AppState>>,
+) -> Json<PersistentPinResponse> {
+    let pin = state.pairing_manager.refresh_persistent_pin().await;
+    Json(PersistentPinResponse { pin })
 }
 
 /// Query parameters for QR code generation

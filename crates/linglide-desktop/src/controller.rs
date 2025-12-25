@@ -111,6 +111,9 @@ impl ServerController {
                 UiCommand::SetUsb { enabled: _ } => {
                     // Would need to restart server to change USB
                 }
+                UiCommand::RefreshPin => {
+                    self.refresh_pin().await;
+                }
                 UiCommand::Shutdown => {
                     info!("Shutdown requested");
                     self.stop_server().await;
@@ -192,6 +195,7 @@ impl ServerController {
         let ds_clone = device_storage.clone();
         let fp_clone = fingerprint.clone();
         let devices_clone = paired_devices.clone();
+        let persistent_pin = pairing_manager.get_persistent_pin().await;
         tokio::spawn(async move {
             if let Err(e) = run_server(
                 config,
@@ -204,6 +208,7 @@ impl ServerController {
                 fp_clone,
                 local_ip,
                 devices_clone,
+                persistent_pin,
             )
             .await
             {
@@ -248,6 +253,19 @@ impl ServerController {
             }
         }
     }
+
+    async fn refresh_pin(&mut self) {
+        if let Some(ref ctx) = self.context {
+            let ctx = ctx.read().await;
+            let new_pin = ctx.pairing_manager.refresh_persistent_pin().await;
+            let _ = self
+                .bridge
+                .event_tx
+                .send(UiEvent::PinRefreshed { pin: new_pin });
+        } else {
+            warn!("Cannot refresh PIN: server not running");
+        }
+    }
 }
 
 /// Get the local IP address
@@ -272,6 +290,7 @@ async fn run_server(
     fingerprint: String,
     local_ip: String,
     paired_devices: Vec<linglide_auth::device::Device>,
+    persistent_pin: String,
 ) -> Result<()> {
     let core_config = Config::new()
         .with_width(config.width)
@@ -335,6 +354,7 @@ async fn run_server(
         url: server_url.clone(),
         fingerprint: fingerprint.clone(),
         paired_devices,
+        pin: persistent_pin,
     });
 
     // Start mDNS if enabled
