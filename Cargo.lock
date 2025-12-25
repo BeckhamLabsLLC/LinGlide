@@ -2919,7 +2919,6 @@ dependencies = [
  "anyhow",
  "bytes",
  "futures",
- "linglide-capture",
  "linglide-core",
  "thiserror 2.0.17",
  "tokio",

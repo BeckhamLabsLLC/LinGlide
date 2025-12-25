@@ -1,4 +1,6 @@
 //! Frame representation for captured screen data
+//!
+//! This module provides the common Frame type used by both capture and encoder crates.
 
 use std::sync::Arc;
 

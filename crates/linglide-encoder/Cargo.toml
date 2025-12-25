@@ -8,7 +8,6 @@ description = "H.264 video encoding for LinGlide"
 
 [dependencies]
 linglide-core.workspace = true
-linglide-capture = { path = "../linglide-capture" }
 x264.workspace = true
 tokio.workspace = true
 tracing.workspace = true

@@ -4,12 +4,12 @@
 //! - X11 MIT-SHM extension (for X11 sessions)
 //! - PipeWire via GStreamer (for Wayland sessions)
 
-pub mod frame;
 pub mod pipewire_capture;
 pub mod virtual_display;
 pub mod x11_capture;
 
-pub use frame::Frame;
+// Re-export Frame from linglide-core for backwards compatibility
+pub use linglide_core::Frame;
 pub use pipewire_capture::PipeWireCapture;
 pub use virtual_display::VirtualDisplay;
 pub use x11_capture::X11Capture;

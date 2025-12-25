@@ -1,8 +1,7 @@
 //! Async encoding pipeline
 
 use crate::{Fmp4Muxer, H264Encoder};
-use linglide_capture::Frame;
-use linglide_core::Result;
+use linglide_core::{Frame, Result};
 use tokio::sync::{broadcast, mpsc};
 use tracing::{debug, info, warn};
 
