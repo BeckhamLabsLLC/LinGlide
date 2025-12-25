@@ -1,0 +1,125 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["BeckhamLabs LLC <hello@beckhamlabs.com>"]
+license = "MIT"
+repository = "https://github.com/BeckhamLabsLLC/LinGlide"
+homepage = "https://beckhamlabs.com"
+keywords = ["linux", "display", "screen-sharing", "virtual-display", "touch"]
+categories = ["multimedia", "hardware-support"]
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Web server
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# X11
+xcb = { version = "1.6", features = ["shm", "randr"] }
+
+# Video encoding
+x264 = "0.5"
+
+# Input injection
+evdev = { version = "0.13", features = ["tokio"] }
+
+# Web assets
+rust-embed = "8"
+mime_guess = "2"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Utilities
+bytes = "1"
+futures = "0.3"
+
+# TLS
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rcgen = "0.13"
+
+# Encoding
+base64 = "0.22"
+
+# Auth/Crypto
+rand = "0.8"
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+dirs = "5"
+
+# QR code generation
+qrcode = "0.14"
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+# Virtual display (EVDI)
+evdi = "0.8"
+
+# Wayland screen capture
+ashpd = "0.10"
+pipewire = "0.8"
+
+# Internal crates
+linglide-core = { path = "crates/linglide-core" }
+linglide-capture = { path = "crates/linglide-capture" }
+linglide-encoder = { path = "crates/linglide-encoder" }
+linglide-input = { path = "crates/linglide-input" }
+linglide-server = { path = "crates/linglide-server" }
+linglide-web = { path = "crates/linglide-web" }
+linglide-auth = { path = "crates/linglide-auth" }
+linglide-discovery = { path = "crates/linglide-discovery" }
+
+[package]
+name = "linglide"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "A high-performance Linux native screen sharing solution for mobile devices"
+readme = "README.md"
+
+[dependencies]
+linglide-core.workspace = true
+linglide-capture.workspace = true
+linglide-encoder.workspace = true
+linglide-input.workspace = true
+linglide-server.workspace = true
+linglide-web.workspace = true
+linglide-auth.workspace = true
+linglide-discovery.workspace = true
+tokio.workspace = true
+qrcode.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+axum.workspace = true
+axum-server.workspace = true
+rcgen.workspace = true
+dirs.workspace = true
+
+[[bin]]
+name = "linglide"
+path = "src/main.rs"

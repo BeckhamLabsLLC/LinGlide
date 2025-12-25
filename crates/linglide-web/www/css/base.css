@@ -1,0 +1,416 @@
+/* LinGlide Base Styles
+ * Dark theme, CSS variables, reset
+ */
+
+/* CSS Variables */
+:root {
+    /* Colors - Dark Theme (OLED-friendly) */
+    --color-bg: #000000;
+    --color-bg-elevated: #1a1a1a;
+    --color-bg-surface: #2d2d2d;
+    --color-bg-overlay: rgba(0, 0, 0, 0.8);
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255, 255, 255, 0.7);
+    --color-text-muted: rgba(255, 255, 255, 0.5);
+
+    --color-accent: #4a9eff;
+    --color-accent-hover: #6bb3ff;
+    --color-success: #4ade80;
+    --color-warning: #facc15;
+    --color-error: #f87171;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+
+    /* Touch targets (minimum 44px for accessibility) */
+    --touch-target-min: 44px;
+    --touch-target-lg: 56px;
+
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    --font-family-mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 48px;
+
+    /* Safe area insets for notched devices */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+
+    /* Z-index layers */
+    --z-base: 0;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-overlay: 300;
+    --z-modal: 400;
+    --z-toast: 500;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    line-height: 1.5;
+}
+
+body {
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior: none;
+}
+
+/* Ensure touch events work properly */
+canvas,
+video {
+    touch-action: none;
+}
+
+/* Button reset */
+button {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Link reset */
+a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Input reset */
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background: var(--color-bg-surface);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+/* Hide scrollbars but allow scrolling */
+.scrollable {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.scrollable::-webkit-scrollbar {
+    display: none;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-normal) forwards;
+}
+
+.fade-out {
+    animation: fadeOut var(--transition-normal) forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Loader */
+.loader {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loader--small {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+}
+
+/* Enhanced Loader with double ring effect */
+.loader--branded {
+    position: relative;
+}
+
+.loader--branded::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 2px solid transparent;
+    border-top-color: rgba(74, 158, 255, 0.3);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite reverse;
+}
+
+/* ============================================================================
+ * Page Transitions
+ * ============================================================================ */
+
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pageExit {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.page-enter {
+    animation: pageEnter var(--transition-normal) ease-out forwards;
+}
+
+.page-exit {
+    animation: pageExit var(--transition-fast) ease-in forwards;
+}
+
+/* ============================================================================
+ * Accessibility Improvements
+ * ============================================================================ */
+
+/* Enhanced focus states */
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-md);
+    z-index: calc(var(--z-toast) + 1);
+    transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+    top: var(--spacing-md);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-bg-surface: #1a1a1a;
+        --color-border: #ffffff;
+    }
+
+    button,
+    input,
+    select {
+        border: 2px solid var(--color-text-primary);
+    }
+}
+
+/* ============================================================================
+ * Reduced Motion Support
+ * ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .loader {
+        animation: none;
+        border-color: var(--color-accent);
+    }
+}
+
+/* ============================================================================
+ * Skeleton Loading States
+ * ============================================================================ */
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--color-bg-surface) 0%,
+        var(--color-bg-elevated) 50%,
+        var(--color-bg-surface) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes skeletonPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton--text {
+    height: 1em;
+    width: 80%;
+}
+
+.skeleton--title {
+    height: 1.5em;
+    width: 60%;
+}
+
+.skeleton--button {
+    height: var(--touch-target-min);
+    width: 120px;
+}
+
+/* ============================================================================
+ * Touch Feedback
+ * ============================================================================ */
+
+.touch-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.touch-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+.touch-ripple:active::after {
+    width: 200%;
+    height: 200%;
+    opacity: 1;
+    transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+}

@@ -1,0 +1,69 @@
+# Build artifacts
+/target/
+**/target/
+
+# Cargo lock for library crates (keep for binary)
+# Cargo.lock is intentionally tracked for reproducible builds
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+!crates/linglide-web/www/**/*.crt
+
+# Debug and logs
+*.log
+debug/
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+*.gcno
+*.gcda
+coverage/
+lcov.info
+
+# Profiling
+*.profraw
+*.profdata
+
+# Documentation build
+/doc/
+docs/_build/
+
+# Rust specific
+**/*.rs.bk
+*.rlib
+
+# Generated files
+*.generated.*
+
+# Local configuration
+.cargo/config.toml
+!.cargo/config.toml.example
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

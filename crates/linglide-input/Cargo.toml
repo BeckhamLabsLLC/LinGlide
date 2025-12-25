@@ -1,0 +1,15 @@
+[package]
+name = "linglide-input"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "uinput-based input injection for LinGlide"
+
+[dependencies]
+linglide-core.workspace = true
+evdev.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true

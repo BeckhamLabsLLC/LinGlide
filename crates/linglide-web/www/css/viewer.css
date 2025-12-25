@@ -1,0 +1,158 @@
+/* LinGlide Viewer Styles */
+
+/* Main Container */
+.viewer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg);
+    touch-action: none;
+}
+
+/* Canvas Display */
+.viewer__canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    touch-action: none;
+    cursor: none;
+}
+
+/* Hide cursor when actively viewing */
+.viewer--active .viewer__canvas {
+    cursor: none;
+}
+
+/* Status Overlay */
+.viewer__status {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-xl);
+    background: var(--color-bg-overlay);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    z-index: var(--z-overlay);
+}
+
+.viewer__status.hidden {
+    display: none;
+}
+
+.viewer__status-text {
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-md);
+    color: var(--color-text-secondary);
+}
+
+/* Error State */
+.viewer--error .viewer__status-text {
+    color: var(--color-error);
+}
+
+.viewer--error .loader {
+    display: none;
+}
+
+/* Reconnecting State */
+.viewer--reconnecting .viewer__status-text::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+/* Connection Quality Indicator */
+.viewer__quality {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    padding-top: var(--safe-area-top);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-overlay);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.viewer:hover .viewer__quality,
+.viewer__quality--show {
+    opacity: 1;
+}
+
+.viewer__quality-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.viewer__quality-dot--good {
+    background: var(--color-success);
+}
+
+.viewer__quality-dot--fair {
+    background: var(--color-warning);
+}
+
+.viewer__quality-dot--poor {
+    background: var(--color-error);
+}
+
+/* Touch Indicator (for debugging) */
+.viewer__touch-indicator {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+    animation: touchRipple 0.3s ease-out forwards;
+}
+
+@keyframes touchRipple {
+    from {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0.8;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Fullscreen Mode */
+:fullscreen .viewer__quality {
+    display: none;
+}
+
+:fullscreen .status-bar {
+    display: none;
+}
+
+/* Stylus/Pen Cursor */
+.viewer--pen .viewer__canvas {
+    cursor: crosshair;
+}
+
+/* Hover State - Show cursor temporarily */
+.viewer--hovering .viewer__canvas {
+    cursor: default;
+}

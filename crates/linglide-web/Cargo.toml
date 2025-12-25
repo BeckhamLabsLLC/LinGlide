@@ -1,0 +1,12 @@
+[package]
+name = "linglide-web"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Embedded web assets for LinGlide viewer"
+
+[dependencies]
+rust-embed.workspace = true
+mime_guess.workspace = true
+axum.workspace = true

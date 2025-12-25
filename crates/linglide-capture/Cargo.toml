@@ -1,0 +1,19 @@
+[package]
+name = "linglide-capture"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Screen capture for X11 and Wayland (LinGlide)"
+
+[dependencies]
+linglide-core.workspace = true
+xcb.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+libc = "0.2"
+ashpd.workspace = true
+pipewire.workspace = true
+evdi.workspace = true

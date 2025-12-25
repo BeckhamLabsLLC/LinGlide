@@ -1,0 +1,45 @@
+[package]
+name = "linglide-desktop"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Desktop GUI application for LinGlide with system tray support"
+
+[[bin]]
+name = "linglide-gui"
+path = "src/main.rs"
+
+[dependencies]
+# GUI framework
+eframe = "0.30"
+egui = "0.30"
+
+# System tray
+tray-icon = "0.19"
+muda = "0.15"
+
+# Image handling for icons and QR codes
+image = { version = "0.25", default-features = false, features = ["png"] }
+qrcode.workspace = true
+
+# Async runtime and communication
+tokio.workspace = true
+futures.workspace = true
+
+# Workspace dependencies
+linglide-core.workspace = true
+linglide-server.workspace = true
+linglide-auth.workspace = true
+linglide-discovery.workspace = true
+linglide-capture.workspace = true
+linglide-encoder.workspace = true
+linglide-input.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+urlencoding = "2.1"
+axum-server.workspace = true
+
+# URL opening
+open = "5"

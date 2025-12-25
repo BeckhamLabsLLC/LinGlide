@@ -1,0 +1,15 @@
+[package]
+name = "linglide-discovery"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "mDNS/DNS-SD service advertisement and USB/ADB support for LinGlide"
+
+[dependencies]
+mdns-sd = "0.11"
+hostname = "0.4"
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+serde.workspace = true
