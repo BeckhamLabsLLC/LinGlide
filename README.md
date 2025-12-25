@@ -1,5 +1,8 @@
 # LinGlide
 
+[![CI](https://github.com/BeckhamLabsLLC/LinGlide/actions/workflows/ci.yml/badge.svg)](https://github.com/BeckhamLabsLLC/LinGlide/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 <p align="center">
   <img src="LinGlideFlow.png" alt="LinGlide Logo" width="128">
 </p>
