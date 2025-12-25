@@ -36,6 +36,7 @@ jobs:
             libgtk-3-dev \
             libssl-dev \
             libdrm-dev \
+            libxdo-dev \
             evdi-dkms
 
       - name: Install Rust toolchain
@@ -81,6 +82,7 @@ jobs:
             libgtk-3-dev \
             libssl-dev \
             libdrm-dev \
+            libxdo-dev \
             evdi-dkms
 
       - name: Install Rust toolchain
@@ -126,6 +128,7 @@ jobs:
             libgtk-3-dev \
             libssl-dev \
             libdrm-dev \
+            libxdo-dev \
             evdi-dkms
 
       - name: Install Rust toolchain
@@ -189,6 +192,7 @@ jobs:
             libgtk-3-dev \
             libssl-dev \
             libdrm-dev \
+            libxdo-dev \
             evdi-dkms
 
       - name: Install Rust toolchain
