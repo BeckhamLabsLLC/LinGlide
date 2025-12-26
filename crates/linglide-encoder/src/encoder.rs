@@ -188,11 +188,7 @@ impl H264Encoder {
         // We'll generate a dummy frame to get the headers
         let dummy_yuv = vec![128u8; (self.width * self.height * 3 / 2) as usize];
 
-        let yuv = YUVBuffer::from_vec(
-            dummy_yuv,
-            self.width as usize,
-            self.height as usize,
-        );
+        let yuv = YUVBuffer::from_vec(dummy_yuv, self.width as usize, self.height as usize);
 
         let bitstream = self
             .encoder
@@ -214,7 +210,9 @@ impl H264Encoder {
                     let start = i;
                     i += 4;
                     while i < data.len().saturating_sub(3) {
-                        if data[i] == 0 && data[i + 1] == 0 && (data[i + 2] == 0 || data[i + 2] == 1)
+                        if data[i] == 0
+                            && data[i + 1] == 0
+                            && (data[i + 2] == 0 || data[i + 2] == 1)
                         {
                             break;
                         }
