@@ -1,8 +1,13 @@
-//! H.264 encoder using x264
+//! H.264 encoder using OpenH264
+//!
+//! OpenH264 is Cisco's open-source H.264 codec that automatically downloads
+//! prebuilt binaries, making it easy to use without system dependencies.
 
 use linglide_core::{Error, Result};
+use openh264::encoder::{Encoder, EncoderConfig};
+use openh264::formats::YUVBuffer;
+use openh264::OpenH264API;
 use tracing::{debug, info};
-use x264::{Colorspace, Encoder, Image, Plane, Setup, Tune};
 
 /// H.264 encoder wrapper with low-latency settings
 pub struct H264Encoder {
@@ -16,12 +21,15 @@ pub struct H264Encoder {
 impl H264Encoder {
     /// Create a new H.264 encoder
     pub fn new(width: u32, height: u32, fps: u32, bitrate: u32) -> Result<Self> {
-        // Use Tune::None with zero_latency=true for low-latency streaming
-        let encoder = Setup::preset(x264::Preset::Superfast, Tune::None, false, true)
-            .fps(fps, 1)
-            .bitrate(bitrate as i32)
-            .build(Colorspace::I420, width as i32, height as i32)
-            .map_err(|_| Error::EncoderError("Failed to create encoder".to_string()))?;
+        let config = EncoderConfig::new()
+            .max_frame_rate(fps as f32)
+            .rate_control_mode(openh264::encoder::RateControlMode::Bitrate)
+            .set_bitrate_bps(bitrate * 1000) // Convert kbps to bps
+            .enable_skip_frame(false);
+
+        let api = OpenH264API::from_source();
+        let encoder = Encoder::with_api_config(api, config)
+            .map_err(|e| Error::EncoderError(format!("Failed to create encoder: {}", e)))?;
 
         // Pre-allocate YUV buffer (I420 format: Y + U/4 + V/4)
         let yuv_size = (width * height * 3 / 2) as usize;
@@ -84,44 +92,20 @@ impl H264Encoder {
         // Convert BGRA to YUV420
         self.bgra_to_yuv420(bgra);
 
-        let width = self.width as usize;
-        let height = self.height as usize;
-        let y_size = width * height;
-        let uv_size = y_size / 4;
-
-        // Create picture with plane data
-        let y_stride = width as i32;
-        let uv_stride = (width / 2) as i32;
-
-        let image = Image::new(
-            Colorspace::I420,
-            self.width as i32,
-            self.height as i32,
-            &[
-                Plane {
-                    stride: y_stride,
-                    data: &self.yuv_buffer[0..y_size],
-                },
-                Plane {
-                    stride: uv_stride,
-                    data: &self.yuv_buffer[y_size..y_size + uv_size],
-                },
-                Plane {
-                    stride: uv_stride,
-                    data: &self.yuv_buffer[y_size + uv_size..],
-                },
-            ],
+        // Create YUV buffer for openh264 from our converted data
+        let yuv = YUVBuffer::from_vec(
+            self.yuv_buffer.clone(),
+            self.width as usize,
+            self.height as usize,
         );
 
-        let pts = self.frame_count;
-
         // Encode the frame
-        let (data, _pic) = self
+        let bitstream = self
             .encoder
-            .encode(pts, image)
-            .map_err(|_| Error::EncoderError("Encoding failed".to_string()))?;
+            .encode(&yuv)
+            .map_err(|e| Error::EncoderError(format!("Encoding failed: {}", e)))?;
 
-        let bytes = data.entirety().to_vec();
+        let bytes = bitstream.to_vec();
         let is_keyframe = self.check_keyframe(&bytes);
 
         // Debug first frame to understand NAL format
@@ -141,6 +125,7 @@ impl H264Encoder {
             is_keyframe
         );
 
+        let pts = self.frame_count;
         let frame = EncodedFrame {
             data: bytes,
             pts,
@@ -154,7 +139,6 @@ impl H264Encoder {
 
     /// Check if NAL data contains a keyframe
     fn check_keyframe(&self, bytes: &[u8]) -> bool {
-        let mut nal_types = Vec::new();
         let mut has_idr = false;
         let mut has_sps = false;
 
@@ -167,7 +151,6 @@ impl H264Encoder {
                 && i + 4 < bytes.len()
             {
                 let nal_type = bytes[i + 4] & 0x1F;
-                nal_types.push(nal_type);
                 if nal_type == 5 {
                     has_idr = true;
                 }
@@ -179,7 +162,6 @@ impl H264Encoder {
 
         // Also check 3-byte start codes
         for i in 0..bytes.len().saturating_sub(3) {
-            // Make sure this isn't part of a 4-byte start code
             if bytes[i] == 0
                 && bytes[i + 1] == 0
                 && bytes[i + 2] == 1
@@ -187,9 +169,6 @@ impl H264Encoder {
                 && i + 3 < bytes.len()
             {
                 let nal_type = bytes[i + 3] & 0x1F;
-                if !nal_types.contains(&nal_type) {
-                    nal_types.push(nal_type);
-                }
                 if nal_type == 5 {
                     has_idr = true;
                 }
@@ -199,21 +178,62 @@ impl H264Encoder {
             }
         }
 
-        if self.frame_count == 0 || (has_idr && self.frame_count > 0) {
-            debug!("Frame {} NAL types: {:?}", self.frame_count, nal_types);
-        }
-
-        // Frame is a keyframe if it has SPS (usually means IDR follows) or explicit IDR
+        // Frame is a keyframe if it has SPS or IDR
         has_idr || has_sps
     }
 
     /// Get encoder headers (SPS/PPS)
     pub fn get_headers(&mut self) -> Result<Vec<u8>> {
-        let headers = self
+        // OpenH264 includes SPS/PPS in the first keyframe
+        // We'll generate a dummy frame to get the headers
+        let dummy_yuv = vec![128u8; (self.width * self.height * 3 / 2) as usize];
+
+        let yuv = YUVBuffer::from_vec(
+            dummy_yuv,
+            self.width as usize,
+            self.height as usize,
+        );
+
+        let bitstream = self
             .encoder
-            .headers()
-            .map_err(|_| Error::EncoderError("Failed to get headers".to_string()))?;
-        Ok(headers.entirety().to_vec())
+            .encode(&yuv)
+            .map_err(|e| Error::EncoderError(format!("Failed to get headers: {}", e)))?;
+
+        // Extract SPS and PPS from the bitstream
+        let data = bitstream.to_vec();
+        let mut headers = Vec::new();
+
+        // Find and extract SPS (NAL type 7) and PPS (NAL type 8)
+        let mut i = 0;
+        while i < data.len().saturating_sub(4) {
+            // Check for 4-byte start code
+            if data[i] == 0 && data[i + 1] == 0 && data[i + 2] == 0 && data[i + 3] == 1 {
+                let nal_type = data.get(i + 4).map(|b| b & 0x1F).unwrap_or(0);
+                if nal_type == 7 || nal_type == 8 {
+                    // Find the end of this NAL unit
+                    let start = i;
+                    i += 4;
+                    while i < data.len().saturating_sub(3) {
+                        if data[i] == 0 && data[i + 1] == 0 && (data[i + 2] == 0 || data[i + 2] == 1)
+                        {
+                            break;
+                        }
+                        i += 1;
+                    }
+                    headers.extend_from_slice(&data[start..i]);
+                    continue;
+                }
+            }
+            i += 1;
+        }
+
+        if headers.is_empty() {
+            // If no separate headers found, return the whole first frame
+            // (OpenH264 typically embeds SPS/PPS in IDR frames)
+            Ok(data)
+        } else {
+            Ok(headers)
+        }
     }
 
     /// Get frame count

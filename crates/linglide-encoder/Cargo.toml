@@ -8,7 +8,7 @@ description = "H.264 video encoding for LinGlide"
 
 [dependencies]
 linglide-core.workspace = true
-x264.workspace = true
+openh264.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
