@@ -1,6 +1,6 @@
 //! LinGlide Encoder - H.264 video encoding
 //!
-//! This crate provides low-latency H.264 encoding using x264.
+//! This crate provides low-latency H.264 encoding using OpenH264.
 
 pub mod encoder;
 pub mod fmp4;

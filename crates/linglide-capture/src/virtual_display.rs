@@ -221,11 +221,8 @@ impl VirtualDisplay {
     }
 
     /// Get the display offset (for input coordinate mapping)
-    pub fn get_offset(&self) -> Result<(i32, i32)> {
-        // Query actual position would require compositor integration
-        // For now, assume right-of primary
-        // TODO: Get actual position from GNOME/compositor
-        Ok((1920, 0))
+    pub fn get_offset(&self) -> (i32, i32) {
+        self.config.display_offset()
     }
 
     /// Check if the display is active

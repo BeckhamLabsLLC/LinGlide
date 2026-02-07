@@ -54,7 +54,7 @@ If you prefer to build manually:
 ```bash
 # Install dependencies (Ubuntu/Debian)
 sudo apt install build-essential pkg-config libssl-dev libx11-dev \
-    libxcb1-dev libxcb-shm0-dev libxcb-randr0-dev libx264-dev \
+    libxcb1-dev libxcb-shm0-dev libxcb-randr0-dev \
     libudev-dev evdi-dkms
 
 # Build
@@ -77,7 +77,7 @@ sudo ./scripts/uninstall.sh
 │                    LINUX HOST (Rust)                        │
 ├─────────────────────────────────────────────────────────────┤
 │  EVDI         →   Frame      →   H.264 Encoder              │
-│  (Virtual         Capture        (x264)                     │
+│  (Virtual         Capture        (OpenH264)                  │
 │   Display)                                                  │
 │                                                             │
 │  uinput       ←   Event      ←   WebSocket Server           │

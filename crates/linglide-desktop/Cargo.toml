@@ -38,7 +38,7 @@ linglide-input.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 anyhow.workspace = true
-urlencoding = "2.1"
+urlencoding.workspace = true
 axum-server.workspace = true
 
 # URL opening

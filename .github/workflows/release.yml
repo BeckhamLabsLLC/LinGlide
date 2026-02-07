@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: bash scripts/install-ci-deps.sh
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-release-
+
+      - name: Build release binaries
+        run: cargo build --release --workspace
+
+      - name: Create tarball
+        run: |
+          mkdir -p linglide-linux-x86_64
+          cp target/release/linglide linglide-linux-x86_64/
+          cp target/release/linglide-gui linglide-linux-x86_64/
+          cp README.md LICENSE linglide-linux-x86_64/
+          cp -r scripts linglide-linux-x86_64/
+          tar czf linglide-linux-x86_64.tar.gz linglide-linux-x86_64/
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: linglide-linux-x86_64.tar.gz
+          generate_release_notes: true

@@ -6,7 +6,7 @@
 use anyhow::Result;
 use clap::Parser;
 use linglide_auth::{DeviceStorage, PairingManager};
-use linglide_capture::{Frame, ScreenCapture, VirtualDisplay};
+use linglide_capture::{detect_primary_display, Frame, ScreenCapture, VirtualDisplay};
 use linglide_core::{Config, DisplayPosition};
 use linglide_discovery::{ServiceAdvertiser, UsbConnectionManager};
 use linglide_encoder::pipeline::StreamSegment;
@@ -122,6 +122,10 @@ async fn main() -> Result<()> {
         .parse()
         .map_err(|e: String| anyhow::anyhow!(e))?;
 
+    // Auto-detect primary display resolution for offset calculation
+    let (primary_w, primary_h) = detect_primary_display();
+    info!("Primary display: {}x{}", primary_w, primary_h);
+
     // Create configuration
     let config = Config::new()
         .with_width(args.width)
@@ -130,13 +134,12 @@ async fn main() -> Result<()> {
         .with_port(args.port)
         .with_position(position)
         .with_bitrate(args.bitrate)
-        .with_mirror_mode(args.mirror);
+        .with_mirror_mode(args.mirror)
+        .with_primary_display(primary_w, primary_h);
 
     // Capture setup: EVDI for virtual display, ScreenCapture for mirror mode
     let use_evdi = !config.mirror_mode;
-    // TODO: For now, use offset 0 to test if touch works at all
-    // On Wayland, input devices may need special handling for virtual displays
-    let (offset_x, offset_y) = (0_i32, 0_i32);
+    let (offset_x, offset_y) = config.display_offset();
 
     // Create channels
     let (frame_tx, frame_rx) = mpsc::channel::<Frame>(2);
@@ -479,7 +482,7 @@ async fn main() -> Result<()> {
         })
     };
 
-    // Spawn encoding task on a dedicated thread (x264 is not Send)
+    // Spawn encoding task on a dedicated thread (encoder is not Send)
     // We need to create the encoder inside the thread
     let segment_tx_clone = segment_tx.clone();
     let enc_width = config.width;
@@ -492,29 +495,47 @@ async fn main() -> Result<()> {
     let state_clone = state.clone();
 
     let _encoding_handle = std::thread::spawn(move || {
-        // Create encoder inside the thread
-        let pipeline = match EncodingPipeline::new(enc_width, enc_height, enc_fps, enc_bitrate) {
-            Ok(p) => p,
-            Err(e) => {
-                eprintln!("Failed to create encoder: {}", e);
-                return;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            // Create encoder inside the thread
+            let pipeline = match EncodingPipeline::new(enc_width, enc_height, enc_fps, enc_bitrate)
+            {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Failed to create encoder: {}", e);
+                    return;
+                }
+            };
+
+            // Send init segment and codec info to main thread
+            if let Some(init_segment) = pipeline.get_init_segment() {
+                let codec_string = pipeline.get_codec_string();
+                let avcc_data = pipeline.get_avcc_data();
+                let _ = init_tx.send((init_segment, codec_string, avcc_data));
             }
-        };
 
-        // Send init segment and codec info to main thread
-        if let Some(init_segment) = pipeline.get_init_segment() {
-            let codec_string = pipeline.get_codec_string();
-            let avcc_data = pipeline.get_avcc_data();
-            let _ = init_tx.send((init_segment, codec_string, avcc_data));
+            // Create a single-threaded runtime for this thread
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(rt) => rt,
+                Err(e) => {
+                    eprintln!("Failed to create encoding runtime: {}", e);
+                    return;
+                }
+            };
+
+            rt.block_on(pipeline.run(frame_rx, segment_tx_clone));
+        }));
+
+        if let Err(panic) = result {
+            let msg = panic
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| panic.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic");
+            eprintln!("Encoding thread panicked: {}", msg);
         }
-
-        // Create a single-threaded runtime for this thread
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
-        rt.block_on(pipeline.run(frame_rx, segment_tx_clone));
     });
 
     // Receive and store init segment and codec info in app state
@@ -558,7 +579,7 @@ async fn main() -> Result<()> {
                 InputEvent::MouseMove { x, y } => mouse.mouse_move(x, y),
                 InputEvent::Scroll { dx, dy } => scroll_mouse.scroll(dx, dy),
                 InputEvent::KeyDown { .. } | InputEvent::KeyUp { .. } => {
-                    // Keyboard input not implemented yet
+                    debug!("Keyboard input not yet implemented");
                     Ok(())
                 }
                 // Stylus/pen events
@@ -683,17 +704,5 @@ fn display_qr_code(data: &str) {
 
     for line in string.lines() {
         println!("  {}", line);
-    }
-}
-
-/// Simple URL encoding for pairing URL
-mod urlencoding {
-    pub fn encode(s: &str) -> String {
-        s.chars()
-            .map(|c| match c {
-                'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => c.to_string(),
-                _ => format!("%{:02X}", c as u8),
-            })
-            .collect()
     }
 }

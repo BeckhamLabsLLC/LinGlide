@@ -66,6 +66,9 @@ impl PipeWireCapture {
 impl Drop for PipeWireCapture {
     fn drop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
+        if let Some(handle) = self._thread.take() {
+            let _ = handle.join();
+        }
     }
 }
 

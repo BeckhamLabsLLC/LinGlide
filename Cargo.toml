@@ -3,7 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["BeckhamLabs LLC <hello@beckhamlabs.com>"]
 license = "MIT"
@@ -51,6 +51,7 @@ thiserror = "2"
 # Utilities
 bytes = "1"
 futures = "0.3"
+urlencoding = "2.1"
 
 # TLS
 axum-server = { version = "0.7", features = ["tls-rustls"] }
@@ -119,6 +120,7 @@ axum.workspace = true
 axum-server.workspace = true
 rcgen.workspace = true
 dirs.workspace = true
+urlencoding.workspace = true
 
 [[bin]]
 name = "linglide"

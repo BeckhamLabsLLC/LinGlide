@@ -15,6 +15,122 @@ pub use virtual_display::VirtualDisplay;
 pub use x11_capture::X11Capture;
 
 use linglide_core::Result;
+use xcb::Xid;
+
+/// Detect the primary display resolution using XCB RandR.
+/// Falls back to (1920, 1080) if detection fails.
+pub fn detect_primary_display() -> (u32, u32) {
+    match detect_primary_display_xcb() {
+        Some(dims) => dims,
+        None => {
+            tracing::warn!("Could not detect primary display, using default 1920x1080");
+            (1920, 1080)
+        }
+    }
+}
+
+fn detect_primary_display_xcb() -> Option<(u32, u32)> {
+    let (conn, screen_num) = xcb::Connection::connect(None).ok()?;
+    let setup = conn.get_setup();
+    let screen = setup.roots().nth(screen_num as usize)?;
+
+    let cookie = conn.send_request(&xcb::randr::GetScreenResourcesCurrent {
+        window: screen.root(),
+    });
+    let reply = conn.wait_for_reply(cookie).ok()?;
+
+    // Try to find the primary output first
+    let primary_cookie = conn.send_request(&xcb::randr::GetOutputPrimary {
+        window: screen.root(),
+    });
+    let primary_reply = conn.wait_for_reply(primary_cookie).ok();
+    let primary_output = primary_reply.map(|r| r.output());
+
+    for output in reply.outputs() {
+        let info_cookie = conn.send_request(&xcb::randr::GetOutputInfo {
+            output: *output,
+            config_timestamp: reply.config_timestamp(),
+        });
+        let info = match conn.wait_for_reply(info_cookie) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+
+        // Skip disconnected outputs
+        if info.connection() != xcb::randr::Connection::Connected {
+            continue;
+        }
+
+        let crtc = info.crtc();
+        if crtc.is_none() {
+            continue;
+        }
+
+        let crtc_cookie = conn.send_request(&xcb::randr::GetCrtcInfo {
+            crtc,
+            config_timestamp: reply.config_timestamp(),
+        });
+        let crtc_info = match conn.wait_for_reply(crtc_cookie) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let w = crtc_info.width() as u32;
+        let h = crtc_info.height() as u32;
+
+        if w == 0 || h == 0 {
+            continue;
+        }
+
+        // If this is the primary output, return immediately
+        if let Some(primary) = primary_output {
+            if *output == primary {
+                tracing::info!("Detected primary display: {}x{}", w, h);
+                return Some((w, h));
+            }
+        }
+    }
+
+    // Fallback: return the first connected output with a valid mode
+    for output in reply.outputs() {
+        let info_cookie = conn.send_request(&xcb::randr::GetOutputInfo {
+            output: *output,
+            config_timestamp: reply.config_timestamp(),
+        });
+        let info = match conn.wait_for_reply(info_cookie) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+
+        if info.connection() != xcb::randr::Connection::Connected {
+            continue;
+        }
+
+        let crtc = info.crtc();
+        if crtc.is_none() {
+            continue;
+        }
+
+        let crtc_cookie = conn.send_request(&xcb::randr::GetCrtcInfo {
+            crtc,
+            config_timestamp: reply.config_timestamp(),
+        });
+        let crtc_info = match conn.wait_for_reply(crtc_cookie) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let w = crtc_info.width() as u32;
+        let h = crtc_info.height() as u32;
+
+        if w > 0 && h > 0 {
+            tracing::info!("Detected first connected display: {}x{}", w, h);
+            return Some((w, h));
+        }
+    }
+
+    None
+}
 
 /// Detect if running under Wayland
 pub fn is_wayland() -> bool {

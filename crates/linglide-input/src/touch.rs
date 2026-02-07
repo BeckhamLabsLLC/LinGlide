@@ -4,7 +4,7 @@ use crate::VirtualDevice;
 use evdev::{AbsoluteAxisCode, EventType, InputEvent, KeyCode};
 use linglide_core::{Error, Result};
 use std::collections::HashMap;
-use tracing::{debug, info};
+use tracing::debug;
 
 /// Virtual touchscreen with multitouch protocol type B support
 pub struct VirtualTouchscreen {
@@ -73,7 +73,7 @@ impl VirtualTouchscreen {
 
         let (abs_x, abs_y) = self.to_absolute(x, y);
 
-        info!(
+        debug!(
             "Touch start: id={}, slot={}, norm=({:.3}, {:.3}), abs=({}, {}), offset=({}, {})",
             id, slot, x, y, abs_x, abs_y, self.offset_x, self.offset_y
         );
@@ -113,7 +113,7 @@ impl VirtualTouchscreen {
 
         let result = self.device.emit(&events);
         if let Err(ref e) = result {
-            info!("Touch emit error: {:?}", e);
+            debug!("Touch emit error: {:?}", e);
         }
         result
     }

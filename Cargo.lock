@@ -2768,7 +2768,7 @@ dependencies = [
 
 [[package]]
 name = "linglide"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -2788,11 +2788,12 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "urlencoding",
 ]
 
 [[package]]
 name = "linglide-auth"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64",
  "chrono",
@@ -2810,7 +2811,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-capture"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "ashpd",
@@ -2826,7 +2827,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -2836,7 +2837,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-desktop"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "axum-server",
@@ -2863,7 +2864,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-discovery"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hostname",
  "mdns-sd",
@@ -2875,7 +2876,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-encoder"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2889,7 +2890,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-input"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "evdev",
@@ -2901,7 +2902,7 @@ dependencies = [
 
 [[package]]
 name = "linglide-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -2929,11 +2930,12 @@ dependencies = [
  "tokio",
  "tower-http",
  "tracing",
+ "urlencoding",
 ]
 
 [[package]]
 name = "linglide-web"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "mime_guess",

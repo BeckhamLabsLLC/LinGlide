@@ -62,6 +62,10 @@ pub struct Config {
     pub virtual_output: Option<String>,
     /// Mirror mode: capture primary display instead of creating virtual display
     pub mirror_mode: bool,
+    /// Primary display width in pixels (auto-detected)
+    pub primary_width: u32,
+    /// Primary display height in pixels (auto-detected)
+    pub primary_height: u32,
 }
 
 impl Default for Config {
@@ -76,6 +80,8 @@ impl Default for Config {
             primary_display: None,
             virtual_output: None,
             mirror_mode: false,
+            primary_width: 1920,
+            primary_height: 1080,
         }
     }
 }
@@ -126,6 +132,26 @@ impl Config {
     pub fn with_mirror_mode(mut self, mirror: bool) -> Self {
         self.mirror_mode = mirror;
         self
+    }
+
+    /// Builder pattern: set primary display dimensions
+    pub fn with_primary_display(mut self, width: u32, height: u32) -> Self {
+        self.primary_width = width;
+        self.primary_height = height;
+        self
+    }
+
+    /// Compute the display offset based on position and primary display dimensions
+    pub fn display_offset(&self) -> (i32, i32) {
+        if self.mirror_mode {
+            return (0, 0);
+        }
+        match self.position {
+            DisplayPosition::RightOf => (self.primary_width as i32, 0),
+            DisplayPosition::LeftOf => (-(self.width as i32), 0),
+            DisplayPosition::Above => (0, -(self.height as i32)),
+            DisplayPosition::Below => (0, self.primary_height as i32),
+        }
     }
 
     /// Calculate bytes per frame for BGRA format

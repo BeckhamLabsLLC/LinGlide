@@ -15,7 +15,7 @@ use futures::{SinkExt, StreamExt};
 use linglide_core::protocol::{InputEvent, ServerMessage};
 use serde::Deserialize;
 use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, trace, warn};
 
 use crate::broadcast::AppState;
 
@@ -253,7 +253,7 @@ pub async fn handle_input_socket(socket: WebSocket, state: Arc<AppState>) {
         match msg {
             Ok(Message::Text(text)) => match serde_json::from_str::<InputEvent>(&text) {
                 Ok(event) => {
-                    info!("Input event received: {:?}", event);
+                    trace!("Input event received: {:?}", event);
                     if state.input_tx.send(event).await.is_err() {
                         warn!("Input channel closed");
                         break;

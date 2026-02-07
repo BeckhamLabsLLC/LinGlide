@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 use thiserror::Error;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
@@ -22,6 +23,12 @@ use uuid::Uuid;
 
 /// Default PIN validity duration in seconds
 pub const PIN_VALIDITY_SECONDS: i64 = 60;
+
+/// Maximum failed PIN attempts before lockout
+const MAX_PIN_ATTEMPTS: u32 = 5;
+
+/// Duration of lockout after too many failed attempts (in seconds)
+const LOCKOUT_DURATION: u64 = 300;
 
 /// Pairing errors
 #[derive(Debug, Error)]
@@ -32,6 +39,8 @@ pub enum PairingError {
     SessionNotFound,
     #[error("Invalid token")]
     InvalidToken,
+    #[error("Too many failed attempts. Try again in {0} seconds")]
+    TooManyAttempts(u64),
     #[error("Storage error: {0}")]
     Storage(#[from] crate::storage::StorageError),
 }
@@ -153,6 +162,8 @@ pub struct PairingManager {
     cert_fingerprint: Option<String>,
     /// Persistent PIN for direct entry (valid for server lifetime)
     persistent_pin: Arc<RwLock<String>>,
+    /// Failed PIN attempts tracker: key -> (count, first_failure_time)
+    failed_attempts: Arc<RwLock<HashMap<String, (u32, Instant)>>>,
 }
 
 impl PairingManager {
@@ -164,6 +175,7 @@ impl PairingManager {
             server_url,
             cert_fingerprint: None,
             persistent_pin: Arc::new(RwLock::new(generate_pin())),
+            failed_attempts: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -179,12 +191,54 @@ impl PairingManager {
             server_url,
             cert_fingerprint: fingerprint,
             persistent_pin: Arc::new(RwLock::new(generate_pin())),
+            failed_attempts: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     /// Set the certificate fingerprint
     pub fn set_fingerprint(&mut self, fingerprint: Option<String>) {
         self.cert_fingerprint = fingerprint;
+    }
+
+    /// Check rate limit for a given key. Returns Err if locked out.
+    async fn check_rate_limit(&self, key: &str) -> PairingResult<()> {
+        let attempts = self.failed_attempts.read().await;
+        if let Some((count, first_failure)) = attempts.get(key) {
+            if *count >= MAX_PIN_ATTEMPTS {
+                let elapsed = first_failure.elapsed().as_secs();
+                if elapsed < LOCKOUT_DURATION {
+                    let remaining = LOCKOUT_DURATION - elapsed;
+                    warn!(
+                        "Rate limit hit for key '{}': {} seconds remaining",
+                        key, remaining
+                    );
+                    return Err(PairingError::TooManyAttempts(remaining));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Record a failed PIN attempt for a given key.
+    async fn record_failed_attempt(&self, key: &str) {
+        let mut attempts = self.failed_attempts.write().await;
+        let entry = attempts
+            .entry(key.to_string())
+            .or_insert((0, Instant::now()));
+        // Reset if lockout has expired
+        if entry.0 >= MAX_PIN_ATTEMPTS && entry.1.elapsed().as_secs() >= LOCKOUT_DURATION {
+            *entry = (0, Instant::now());
+        }
+        if entry.0 == 0 {
+            entry.1 = Instant::now();
+        }
+        entry.0 += 1;
+    }
+
+    /// Clear failed attempts for a given key on successful verification.
+    async fn clear_failed_attempts(&self, key: &str) {
+        let mut attempts = self.failed_attempts.write().await;
+        attempts.remove(key);
     }
 
     /// Get the persistent PIN (valid for entire server lifetime)
@@ -206,12 +260,20 @@ impl PairingManager {
         &self,
         request: DirectVerifyRequest,
     ) -> PairingResult<PairingVerifyResponse> {
+        let rate_key = "persistent";
+        self.check_rate_limit(rate_key).await?;
+
         let persistent = self.persistent_pin.read().await;
 
         if *persistent != request.pin {
+            drop(persistent);
+            self.record_failed_attempt(rate_key).await;
             warn!("Invalid persistent PIN attempt");
             return Err(PairingError::InvalidPin);
         }
+        drop(persistent);
+
+        self.clear_failed_attempts(rate_key).await;
 
         // Generate auth token
         let token = generate_token();
@@ -262,6 +324,9 @@ impl PairingManager {
         &self,
         request: PairingVerifyRequest,
     ) -> PairingResult<PairingVerifyResponse> {
+        let rate_key = format!("session:{}", request.session_id);
+        self.check_rate_limit(&rate_key).await?;
+
         // Find and validate session
         let session = {
             let sessions = self.sessions.read().await;
@@ -271,9 +336,12 @@ impl PairingManager {
         let session = session.ok_or(PairingError::SessionNotFound)?;
 
         if !session.verify_pin(&request.pin) {
+            self.record_failed_attempt(&rate_key).await;
             warn!("Invalid PIN attempt for session {}", request.session_id);
             return Err(PairingError::InvalidPin);
         }
+
+        self.clear_failed_attempts(&rate_key).await;
 
         // Generate auth token
         let token = generate_token();

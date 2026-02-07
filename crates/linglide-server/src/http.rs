@@ -39,7 +39,6 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/pair/start", post(pair_start_handler))
         .route("/api/pair/verify", post(pair_verify_handler))
         .route("/api/pair/verify-direct", post(pair_verify_direct_handler))
-        .route("/api/pair/pin", get(pair_pin_handler))
         .route("/api/pair/pin/refresh", post(pair_pin_refresh_handler))
         .route("/api/pair/qr", get(pair_qr_handler))
         .route("/api/pair/status", get(pair_status_handler))
@@ -139,20 +138,31 @@ async fn pair_verify_direct_handler(
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
 }
 
-/// Get the persistent PIN
-///
-/// Returns the PIN that is valid for the server's lifetime.
-async fn pair_pin_handler(State(state): State<Arc<AppState>>) -> Json<PersistentPinResponse> {
-    let pin = state.pairing_manager.get_persistent_pin().await;
-    Json(PersistentPinResponse { pin })
-}
-
-/// Refresh (regenerate) the persistent PIN
+/// Refresh (regenerate) the persistent PIN (requires valid auth token)
 async fn pair_pin_refresh_handler(
     State(state): State<Arc<AppState>>,
-) -> Json<PersistentPinResponse> {
+    headers: axum::http::HeaderMap,
+) -> Result<Json<PersistentPinResponse>, (StatusCode, String)> {
+    // Require a valid auth token
+    if state.auth_required {
+        let token = headers
+            .get(header::AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.strip_prefix("Bearer "))
+            .ok_or((
+                StatusCode::UNAUTHORIZED,
+                "Authentication required".to_string(),
+            ))?;
+
+        state
+            .pairing_manager
+            .validate_token(token)
+            .await
+            .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid token".to_string()))?;
+    }
+
     let pin = state.pairing_manager.refresh_persistent_pin().await;
-    Json(PersistentPinResponse { pin })
+    Ok(Json(PersistentPinResponse { pin }))
 }
 
 /// Query parameters for QR code generation
@@ -186,7 +196,7 @@ async fn pair_qr_handler(
     // Create pairing URL with enhanced fields
     let mut pairing_url = format!(
         "linglide://pair?url={}&pin={}&session={}",
-        urlencoding(&qr_data.url),
+        urlencoding::encode(&qr_data.url),
         qr_data.pin,
         qr_data.session_id
     );
@@ -227,16 +237,6 @@ async fn pair_qr_handler(
         buffer.into_inner(),
     )
         .into_response())
-}
-
-/// Simple URL encoding for the pairing URL
-fn urlencoding(s: &str) -> String {
-    s.chars()
-        .map(|c| match c {
-            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => c.to_string(),
-            _ => format!("%{:02X}", c as u8),
-        })
-        .collect()
 }
 
 /// Response for pairing status check
